@@ -60,7 +60,7 @@ serve(async (req) => {
     console.error("ERRO CRÍTICO NO CHECKOUT:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
+      status: 200, // Retornamos 200 com o objeto de erro para evitar que o navegador bloqueie por CORS
     });
   }
 });
