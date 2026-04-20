@@ -37,6 +37,7 @@ export interface StockItem {
   learned_consumption?: boolean;
   purchase_count?: number;
   avg_duration_days?: number | null;
+  receipt_id?: string;
 }
 
 export interface PurchaseHistory {
@@ -52,6 +53,7 @@ export interface PurchaseHistory {
   purchase_date: string;
   list_id?: string;
   scanned?: boolean;
+  receipt_id?: string;
 }
 
 export type SubscriptionStatus = 'loading' | 'trial' | 'active' | 'expired' | 'no_trial';

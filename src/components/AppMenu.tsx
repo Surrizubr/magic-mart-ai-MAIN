@@ -28,7 +28,7 @@ interface AppMenuProps {
   initialSubMenu?: SubMenu;
 }
 
-export function AppMenu({ open, onClose }: AppMenuProps) {
+export function AppMenu({ open, onClose, initialSubMenu }: AppMenuProps) {
   const { theme, setTheme, largeText, setLargeText } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const { stockExpiryDays, setStockExpiryDays } = usePreferences();
