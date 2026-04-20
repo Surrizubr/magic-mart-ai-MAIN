@@ -30,34 +30,42 @@ let isLoaded = false;
 export async function initializeLocalData() {
   if (isLoaded) return;
   
-  // Tentar carregar da memória física do smartphone
-  const stock = await storage.get<StockItem[]>('stock_items');
-  const lists = await storage.get<ShoppingList[]>('shopping_lists');
-  const history = await storage.get<PurchaseHistory[]>('purchase_history');
+  try {
+    // Tentar carregar da memória física do smartphone
+    const stock = await storage.get<StockItem[]>('stock_items');
+    const lists = await storage.get<ShoppingList[]>('shopping_lists');
+    const history = await storage.get<PurchaseHistory[]>('purchase_history');
 
-  // Se não houver nada, usa os padrões e salva
-  if (!stock) {
+    // Se não houver nada, usa os padrões e salva
+    if (!stock) {
+      stockCache = defaultStock;
+      await storage.set('stock_items', defaultStock);
+    } else {
+      stockCache = stock;
+    }
+
+    if (!lists) {
+      listsCache = defaultLists;
+      await storage.set('shopping_lists', defaultLists);
+    } else {
+      listsCache = lists;
+    }
+
+    if (!history) {
+      historyCache = defaultHistory;
+      await storage.set('purchase_history', defaultHistory);
+    } else {
+      historyCache = history;
+    }
+
+    isLoaded = true;
+  } catch (error) {
+    console.error("Failed to initialize local data, falling back to defaults:", error);
     stockCache = defaultStock;
-    await storage.set('stock_items', defaultStock);
-  } else {
-    stockCache = stock;
-  }
-
-  if (!lists) {
     listsCache = defaultLists;
-    await storage.set('shopping_lists', defaultLists);
-  } else {
-    listsCache = lists;
-  }
-
-  if (!history) {
     historyCache = defaultHistory;
-    await storage.set('purchase_history', defaultHistory);
-  } else {
-    historyCache = history;
+    isLoaded = true;
   }
-
-  isLoaded = true;
 }
 
 // Funções síncronas para as páginas usarem sem delay
