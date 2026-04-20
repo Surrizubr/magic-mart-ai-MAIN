@@ -1,0 +1,293 @@
+import { useState, useEffect, useRef } from 'react';
+import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
+import { REMINDER_LIST_NAME_CONST } from '@/lib/reminderList';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { PageHeader } from '@/components/PageHeader';
+import { getLists, saveLists, getStock, saveStock, getHistory, saveHistory } from '@/data/mockData';
+import { Plus, ShoppingCart, CheckCircle2, Archive, Trash2, ArchiveRestore } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ShoppingList, ShoppingListItem, StockItem } from '@/types';
+import { ListDetailPage } from './ListDetailPage';
+import { toast } from 'sonner';
+
+type Filter = 'active' | 'completed' | 'archived';
+
+interface ListsPageProps {
+  onBack?: () => void;
+}
+
+export function ListsPage({ onBack }: ListsPageProps) {
+  const [filter, setFilter] = useState<Filter>('active');
+  const [showNewList, setShowNewList] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [lists, setLists] = useState<ShoppingList[]>(() => getLists());
+  const [selectedList, setSelectedList] = useState<ShoppingList | null>(null);
+
+  const filtered = lists.filter(l => {
+    if (filter === 'active') return l.status === 'active' || l.status === 'shopping';
+    if (filter === 'completed') return l.status === 'completed';
+    return l.status === 'archived';
+  }).sort((a, b) => {
+    // "Lembrete de Compras" always on top
+    if (a.name === REMINDER_LIST_NAME_CONST) return -1;
+    if (b.name === REMINDER_LIST_NAME_CONST) return 1;
+    return 0;
+  });
+
+  const createList = () => {
+    if (!newName.trim()) return;
+    const newList: ShoppingList = {
+      id: Date.now().toString(), name: newName.trim(), status: 'active',
+      total_items: 0, checked_items: 0, estimated_total: 0, actual_total: 0,
+      created_at: new Date().toISOString().slice(0, 10), items: [],
+    };
+    setLists(prev => [newList, ...prev]);
+    setNewName('');
+    setShowNewList(false);
+  };
+
+  const handleFinishShopping = (updatedList: ShoppingList, checkedItems: ShoppingListItem[], storeName: string) => {
+    setLists(prev => prev.map(l => l.id === updatedList.id ? updatedList : l));
+    const existingStock: StockItem[] = getStock();
+    checkedItems.forEach(item => {
+      const existing = existingStock.find(s => s.product_name.toLowerCase() === item.product_name.toLowerCase());
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        existingStock.push({
+          id: `stock_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          product_name: item.product_name, category: item.category,
+          quantity: item.quantity, unit: item.unit, min_quantity: 1,
+          daily_consumption_rate: 0.1, status: 'ok',
+          last_price: item.estimated_price || item.actual_price,
+        });
+      }
+    });
+    saveStock(existingStock);
+    recalculateAllConsumptionRates();
+    const history = getHistory();
+    checkedItems.forEach(item => {
+      history.push({
+        id: `h_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        product_name: item.product_name, category: item.category,
+        quantity: item.quantity, price: item.actual_price || item.estimated_price,
+        total_price: (item.actual_price || item.estimated_price) * item.quantity,
+        store_name: storeName, purchase_date: new Date().toISOString().slice(0, 10),
+        list_id: updatedList.id,
+      });
+    });
+    saveHistory(history);
+    setSelectedList(null);
+  };
+
+  useEffect(() => {
+    saveLists(lists);
+  }, [lists]);
+
+  const handleUpdateList = (updatedList: ShoppingList) => {
+    setLists(prev => prev.map(l => l.id === updatedList.id ? updatedList : l));
+  };
+
+  const handleSwipe = (listId: string, direction: 'left' | 'right') => {
+    const list = lists.find(l => l.id === listId);
+    if (!list) return;
+
+    if (direction === 'left') {
+      // Delete
+      setLists(prev => prev.filter(l => l.id !== listId));
+      toast.success('Lista excluída.');
+    } else {
+      // Right: archive or unarchive
+      if (list.status === 'archived') {
+        setLists(prev => prev.map(l => l.id === listId ? { ...l, status: 'active' as const } : l));
+        toast.success('Lista restaurada.');
+      } else {
+        setLists(prev => prev.map(l => l.id === listId ? { ...l, status: 'archived' as const } : l));
+        toast.success('Lista arquivada.');
+      }
+    }
+  };
+
+  if (selectedList) {
+    const current = lists.find(l => l.id === selectedList.id) || selectedList;
+    return (
+      <ListDetailPage
+        list={current}
+        onBack={() => setSelectedList(null)}
+        onUpdateList={handleUpdateList}
+        onFinishShopping={handleFinishShopping}
+      />
+    );
+  }
+
+  const filters: { id: Filter; label: string; icon?: typeof ShoppingCart }[] = [
+    { id: 'active', label: 'Ativas', icon: ShoppingCart },
+    { id: 'completed', label: 'Concluídas', icon: CheckCircle2 },
+    { id: 'archived', label: 'Arquivo', icon: Archive },
+  ];
+
+  return (
+    <div className="pb-20">
+      <PageHeader
+        title="Listas de Compras"
+        subtitle="Organize suas compras"
+        onBack={onBack}
+        action={
+          <button onClick={() => setShowNewList(true)} className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
+            <Plus className="w-5 h-5 text-primary-foreground" />
+          </button>
+        }
+      />
+
+      <div className="p-4 space-y-4">
+        {/* Filters */}
+        <div className="flex gap-2">
+          {filters.map(f => {
+            const Icon = f.icon;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                  filter === f.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground'
+                }`}
+              >
+                {Icon && <Icon className="w-3.5 h-3.5" />}
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Swipe hint */}
+        <p className="text-[10px] text-muted-foreground text-center">
+          ← Deslize para excluir · Deslize para arquivar →
+        </p>
+
+        {/* New List Form */}
+        <AnimatePresence>
+          {showNewList && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+                <input
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  placeholder="Nome da lista..."
+                  className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-primary/30"
+                  autoFocus
+                  onKeyDown={e => e.key === 'Enter' && createList()}
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={createList} className="gradient-primary text-primary-foreground border-0">
+                    Criar Lista
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setShowNewList(false)}>
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Lists */}
+        <motion.div layout className="space-y-3">
+          {filtered.map((l, i) => (
+            <SwipeableListCard
+              key={l.id}
+              list={l}
+              index={i}
+              onSelect={() => setSelectedList(l)}
+              onSwipe={(dir) => handleSwipe(l.id, dir)}
+            />
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground py-8">Nenhuma lista encontrada</p>
+          )}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function SwipeableListCard({
+  list,
+  index,
+  onSelect,
+  onSwipe,
+}: {
+  list: ShoppingList;
+  index: number;
+  onSelect: () => void;
+  onSwipe: (dir: 'left' | 'right') => void;
+}) {
+  const [dragX, setDragX] = useState(0);
+  const threshold = 100;
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.x < -threshold) {
+      onSwipe('left');
+    } else if (info.offset.x > threshold) {
+      onSwipe('right');
+    }
+    setDragX(0);
+  };
+
+  const bgLeft = dragX < -30 ? 'bg-destructive' : 'bg-transparent';
+  const bgRight = dragX > 30 ? 'bg-primary' : 'bg-transparent';
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Background hints */}
+      <div className={`absolute inset-y-0 left-0 w-full flex items-center justify-end pr-4 rounded-xl ${bgLeft} transition-colors`}>
+        {dragX < -30 && <Trash2 className="w-5 h-5 text-destructive-foreground" />}
+      </div>
+      <div className={`absolute inset-y-0 right-0 w-full flex items-center justify-start pl-4 rounded-xl ${bgRight} transition-colors`}>
+        {dragX > 30 && (
+          list.status === 'archived'
+            ? <ArchiveRestore className="w-5 h-5 text-primary-foreground" />
+            : <Archive className="w-5 h-5 text-primary-foreground" />
+        )}
+      </div>
+
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.4}
+        onDrag={(_, info) => setDragX(info.offset.x)}
+        onDragEnd={handleDragEnd}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+        onClick={onSelect}
+        className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:shadow-elevated transition-shadow relative z-10"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
+            <ShoppingCart className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">{list.name}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {list.status === 'shopping' ? '🛒 Em compras · ' : ''}
+              {list.checked_items}/{list.total_items} itens
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full gradient-primary transition-all"
+            style={{ width: `${list.total_items ? (list.checked_items / list.total_items) * 100 : 0}%` }}
+          />
+        </div>
+      </motion.div>
+    </div>
+  );
+}
