@@ -106,9 +106,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     // Fast-path: check cache first to avoid flickering if we already know it's active
     const cached = localStorage.getItem(`sub_status_${user.id}`);
-    if (cached === 'active' && !loading && !forceSync) {
-        // We already know it's active, we can skip immediate loading if not forced
-    } else {
+    if (cached !== 'active' || forceSync) {
         setLoading(true);
     }
 
@@ -142,7 +140,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     applySubscriptionState(profile);
     setLoading(false);
-  }, [applySubscriptionState, fetchProfile, user, devMode, syncSubscriptionFromStripe, loading]);
+  }, [applySubscriptionState, fetchProfile, user, devMode, syncSubscriptionFromStripe]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
