@@ -8,26 +8,8 @@ export async function analyzeWithGemini(images: string[], prompt: string, provid
       throw new Error('Chave API não encontrada. Por favor, configure-a no Menu > Configurações.');
     }
 
-    // Use Edge Function ONLY for the Receipt prompt
-    if (prompt === RECEIPT_PROMPT) {
-      console.log("Using Edge Function for receipt analysis...");
-      const { data, error } = await supabase.functions.invoke('analyze-receipt', {
-        body: { 
-          images, 
-          geminiApiKey
-        },
-        headers: {
-          'apikey': SUPABASE_PUBLISHABLE_KEY || ''
-        }
-      });
-
-      if (error) throw error;
-      if (!data.ok) throw new Error(data.error || "Erro desconhecido na análise do cupom");
-      return data.data;
-    }
-
-    // For other prompts (like direct product recognition), call Gemini directly from the client
-    console.log("Using direct Gemini API for product/general analysis...");
+    // Send directly to Gemini API for both Product and Receipt
+    console.log("Using direct Gemini API for analysis...");
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     
     // Prepare image parts
@@ -42,6 +24,7 @@ export async function analyzeWithGemini(images: string[], prompt: string, provid
     });
 
     const isProductPrompt = prompt === PRODUCT_PROMPT;
+    const isReceiptPrompt = prompt === RECEIPT_PROMPT;
     
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -55,6 +38,32 @@ export async function analyzeWithGemini(images: string[], prompt: string, provid
             category: { type: Type.STRING },
           },
           required: ["product_name", "category"]
+        } : isReceiptPrompt ? {
+          type: Type.OBJECT,
+          properties: {
+            store_name: { type: Type.STRING },
+            store_address: { type: Type.STRING },
+            date: { type: Type.STRING },
+            receipt_total: { type: Type.NUMBER },
+            items: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  product_name: { type: Type.STRING },
+                  quantity: { type: Type.NUMBER },
+                  unit: { type: Type.STRING },
+                  unit_price: { type: Type.NUMBER },
+                  total_price: { type: Type.NUMBER },
+                  discount_amount: { type: Type.NUMBER },
+                  discounted_price: { type: Type.NUMBER },
+                  category: { type: Type.STRING },
+                },
+                required: ["product_name", "quantity", "unit", "unit_price", "total_price", "discount_amount", "discounted_price", "category"]
+              }
+            }
+          },
+          required: ["store_name", "date", "receipt_total", "items"]
         } : undefined
       }
     });
