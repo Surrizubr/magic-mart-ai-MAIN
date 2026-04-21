@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function analyzeWithGemini(images: string[], prompt: string, apiKey: string) {
   if (!apiKey) throw new Error("Gemini API Key missing");

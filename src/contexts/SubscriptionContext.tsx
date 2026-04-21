@@ -76,7 +76,21 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     };
   }, [user]);
 
-  const checkSubscription = useCallback(async () => {
+  const syncSubscriptionFromStripe = useCallback(async (): Promise<any | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription', {
+        body: {},
+        headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY || '' }
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('check-subscription failed', error);
+      return null;
+    }
+  }, []);
+
+  const checkSubscription = useCallback(async ({ forceSync = false }: { forceSync?: boolean } = {}) => {
     if (!user) {
       applySubscriptionState(null);
       setLoading(false);
@@ -90,14 +104,57 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
 
     setLoading(true);
-    const profile = await fetchProfile();
+    let profile = await fetchProfile();
+
+    const shouldSyncWithStripe =
+      forceSync ||
+      !profile ||
+      profile.stripe_status !== 'active' ||
+      !profile.subscription_end ||
+      new Date(profile.subscription_end).getTime() <= Date.now();
+
+    if (shouldSyncWithStripe) {
+      const stripeSync = await syncSubscriptionFromStripe();
+      if (stripeSync?.subscribed) {
+        profile = (await fetchProfile()) || profile;
+      }
+    }
+
     applySubscriptionState(profile);
     setLoading(false);
-  }, [applySubscriptionState, fetchProfile, user, devMode]);
+  }, [applySubscriptionState, fetchProfile, user, devMode, syncSubscriptionFromStripe]);
 
   useEffect(() => {
-    checkSubscription();
-  }, [checkSubscription]);
+    if (!user) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const checkoutStatus = params.get('checkout');
+    const sessionId = params.get('session_id');
+
+    if (checkoutStatus === 'success' && sessionId) {
+      window.history.replaceState({}, '', window.location.pathname);
+      (async () => {
+        setLoading(true);
+        try {
+          await supabase.functions.invoke('verify-checkout', {
+            body: { session_id: sessionId },
+          });
+        } catch (e) {
+          console.error('verify-checkout failed', e);
+        }
+
+        for (let i = 0; i < 10; i++) {
+          const syncResult = await syncSubscriptionFromStripe();
+          if (syncResult?.subscribed) break;
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+
+        await checkSubscription({ forceSync: true });
+      })();
+    } else {
+      checkSubscription();
+    }
+  }, [checkSubscription, user, syncSubscriptionFromStripe]);
 
   const openCheckout = async () => {
     try {

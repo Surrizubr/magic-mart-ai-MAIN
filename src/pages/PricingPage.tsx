@@ -4,32 +4,19 @@ import { Crown, Check, LogOut } from 'lucide-react';
 import { supabase, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDevMode } from '@/contexts/DevModeContext';
+import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { toast } from 'sonner';
 
 export function PricingPage() {
   const { t, currency } = useLanguage();
   const { setDevMode } = useDevMode();
+  const { openCheckout, loading: checkoutLoading } = useSubscriptionContext();
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = async () => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: {},
-        headers: {
-          'apikey': SUPABASE_PUBLISHABLE_KEY || '',
-        }
-      });
-      if (error) throw error;
-      if (data?.url) {
-        const w = window.open(data.url, '_blank');
-        if (!w) window.location.href = data.url;
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao iniciar checkout');
-    } finally {
-      setLoading(false);
-    }
+    await openCheckout();
+    setLoading(false);
   };
 
   const handleLogout = async () => {
