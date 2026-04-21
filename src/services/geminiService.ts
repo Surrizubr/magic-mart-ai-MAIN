@@ -1,30 +1,79 @@
 import { supabase, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
+import { GoogleGenAI, Type } from "@google/genai";
 
 export async function analyzeWithGemini(images: string[], prompt: string, providedApiKey?: string) {
   try {
     const geminiApiKey = providedApiKey || localStorage.getItem('gemini-api-key') || '';
+    if (!geminiApiKey) {
+      throw new Error('Chave API não encontrada. Por favor, configure-a no Menu > Configurações.');
+    }
+
+    // Use Edge Function ONLY for the Receipt prompt
+    if (prompt === RECEIPT_PROMPT) {
+      console.log("Using Edge Function for receipt analysis...");
+      const { data, error } = await supabase.functions.invoke('analyze-receipt', {
+        body: { 
+          images, 
+          geminiApiKey
+        },
+        headers: {
+          'apikey': SUPABASE_PUBLISHABLE_KEY || ''
+        }
+      });
+
+      if (error) throw error;
+      if (!data.ok) throw new Error(data.error || "Erro desconhecido na análise do cupom");
+      return data.data;
+    }
+
+    // For other prompts (like direct product recognition), call Gemini directly from the client
+    console.log("Using direct Gemini API for product/general analysis...");
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     
-    // The edge function expects 'images' and 'geminiApiKey'
-    const { data, error } = await supabase.functions.invoke('analyze-receipt', {
-      body: { 
-        images, 
-        geminiApiKey
-      },
-      headers: {
-        'apikey': SUPABASE_PUBLISHABLE_KEY || ''
+    // Prepare image parts
+    const imageParts = images.map(img => {
+      const matches = img.match(/^data:(.+);base64,(.+)$/);
+      return {
+        inlineData: {
+          mimeType: matches ? matches[1] : "image/jpeg",
+          data: matches ? matches[2] : img,
+        }
+      };
+    });
+
+    const isProductPrompt = prompt === PRODUCT_PROMPT;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-flash-latest",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            ...imageParts
+          ],
+        }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: isProductPrompt ? {
+          type: Type.OBJECT,
+          properties: {
+            product_name: { type: Type.STRING },
+            category: { type: Type.STRING },
+          },
+          required: ["product_name", "category"]
+        } : undefined
       }
     });
 
-    if (error) throw error;
-    
-    if (!data.ok) {
-      throw new Error(data.error || "Erro desconhecido na análise do cupom");
+    if (!response.text) {
+      throw new Error("A IA não retornou uma resposta válida.");
     }
-    
-    // The reference edge function returns { ok: true, data: receiptData }
-    return data.data;
+
+    return JSON.parse(response.text);
   } catch (error: any) {
-    console.error("Edge Function 'analyze-receipt' Error:", error);
+    console.error("AI Analysis Error:", error);
     throw error;
   }
 }

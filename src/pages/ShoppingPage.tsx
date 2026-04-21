@@ -178,42 +178,87 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     onNavigate('home');
   };
 
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream, cameraActive]);
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setCameraActive(true);
-      }
-    } catch {
-      toast.error('Não foi possível acessar a câmera');
+      setCameraStream(stream);
+      setCameraActive(true);
+      
+      // We'll set the srcObject in a useEffect or directly if ref is available later
+      // But actually, setting it in the render is safer or using a ref combined with stream state
+    } catch (err: any) {
+      console.error('Camera Access Error:', err);
+      toast.error('Não foi possível acessar a câmera: ' + (err.message || 'Permissão negada'));
     }
   };
 
   const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
-      setCameraActive(false);
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      setCameraStream(null);
     }
+    setCameraActive(false);
+  };
+
+  const compressImage = (dataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const max = 1200;
+        if (width > height) {
+          if (width > max) {
+            height *= max / width;
+            width = max;
+          }
+        } else {
+          if (height > max) {
+            width *= max / height;
+            height = max;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = dataUrl;
+    });
   };
 
   const captureAndRecognize = async () => {
     if (!videoRef.current) return;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.drawImage(videoRef.current, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-
-    toast.loading('Analisando produto...', { id: 'ai-recognition' });
-
     try {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx || canvas.width === 0) {
+        throw new Error('Câmera não está pronta ou sem imagem.');
+      }
+
+      ctx.drawImage(videoRef.current, 0, 0);
+      const originalDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      
+      toast.loading('Otimizando e analisando produto...', { id: 'ai-recognition' });
+
+      // Compress first
+      const compressedDataUrl = await compressImage(originalDataUrl);
+
       const geminiApiKey = localStorage.getItem('gemini-api-key') || '';
-      const result = await analyzeWithGemini([dataUrl], PRODUCT_PROMPT, geminiApiKey);
+      const result = await analyzeWithGemini([compressedDataUrl], PRODUCT_PROMPT, geminiApiKey);
 
       const { product_name, category } = result;
       setNewName(product_name || '');
@@ -223,7 +268,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       toast.success(`Produto reconhecido: ${product_name}`, { id: 'ai-recognition' });
     } catch (err: any) {
       console.error('AI Recognition Error:', err);
-      toast.error('Não foi possível reconhecer o produto. Tente digitar o nome.', { id: 'ai-recognition' });
+      toast.error(err.message || 'Erro ao reconhecer produto.', { id: 'ai-recognition' });
       setShowAddForm(true);
       stopCamera();
     }

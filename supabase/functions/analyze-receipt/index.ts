@@ -106,20 +106,20 @@ Você DEVE:
       },
     ];
 
-    const model = "gemini-1.5-flash";
+    const model = "gemini-1.5-flash-latest";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
 
     // Convert data URLs to Gemini format
     const promptParts = [
-      { text: "Analise este cupom fiscal e extraia todos os dados estruturados." }
+      { text: "Analise este cupom fiscal e extraia todos os dados estruturados seguindo o JSON schema fornecido." }
     ];
 
-    images.forEach((img: string) => {
+    images.forEach((img: string, index: number) => {
       const matches = img.match(/^data:(.+);base64,(.+)$/);
       if (matches) {
         promptParts.push({
-          inlineData: {
-            mimeType: matches[1],
+          inline_data: { // Note: some versions use inline_data instead of inlineData
+            mime_type: matches[1],
             data: matches[2],
           },
         } as any);
@@ -140,24 +140,21 @@ Você DEVE:
           },
         ],
         generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: tools[0].function.parameters
+          response_mime_type: "application/json",
+          response_schema: tools[0].function.parameters
         },
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("Gemini API error:", response.status, errText);
+      console.error(`Gemini API error (${response.status}):`, errText);
       
-      let errorMessage = "Erro na análise de IA. Tente novamente.";
-      if (response.status === 400 && (errText.includes("API_KEY_INVALID") || errText.includes("invalid key"))) {
-        errorMessage = "Chave API Gemini inválida. Verifique nas configurações.";
-      } else if (response.status === 429) {
-        errorMessage = "Limite de requisições excedido. Tente novamente em instantes.";
-      } else if (response.status === 503) {
-        errorMessage = "O modelo Gemini está temporariamente indisponível.";
-      }
+      let errorMessage = `Erro na API da IA (${response.status}).`;
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson.error?.message) errorMessage += ` Detalhe: ${errJson.error.message}`;
+      } catch (e) {}
       
       return respond(false, { error: errorMessage });
     }
@@ -166,11 +163,17 @@ Você DEVE:
     const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!text) {
-      return respond(false, { error: "IA não retornou dados estruturados. Tente novamente." });
+      console.error("No text in candidates:", JSON.stringify(result));
+      return respond(false, { error: "A IA não conseguiu ler o cupom. Tente uma foto mais nítida." });
     }
 
-    const receiptData = JSON.parse(text);
-    return respond(true, { data: receiptData });
+    try {
+      const receiptData = JSON.parse(text);
+      return respond(true, { data: receiptData });
+    } catch (parseError) {
+      console.error("Failed to parse AI JSON:", text);
+      return respond(false, { error: "Erro ao processar os dados da IA." });
+    }
   } catch (e) {
     console.error("analyze-receipt error:", e);
     return respond(false, { error: e instanceof Error ? e.message : "Erro desconhecido" });

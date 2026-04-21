@@ -13,6 +13,7 @@ import { ReportsPage } from '@/pages/ReportsPage';
 import { ScannerPage } from '@/pages/ScannerPage';
 import { ShoppingPage } from '@/pages/ShoppingPage';
 import { SharePage } from '@/pages/SharePage';
+import { DevToolsPage } from '@/pages/DevToolsPage';
 import { TabId } from '@/types';
 
 const Index = () => {
@@ -48,6 +49,7 @@ const Index = () => {
       case 'scanner': return <ScannerPage onBack={goHome} onNavigateToHistory={navigateToHistoryFiltered} onOpenMenu={() => { setMenuInitialSubMenu('gemini'); setMenuOpen(true); }} />;
       case 'shopping': return <ShoppingPage onNavigate={setActiveTab} onBack={goHome} />;
       case 'share': return <SharePage onBack={goHome} />;
+      case 'devtools': return <DevToolsPage onBack={goHome} />;
     }
   };
 

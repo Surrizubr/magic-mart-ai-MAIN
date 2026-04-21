@@ -264,6 +264,23 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
             </div>
           )}
         </motion.div>
+        
+        {/* Developer Mode Card */}
+        <motion.div variants={item} className="pb-6">
+          <button
+            onClick={() => onNavigate('devtools')}
+            className="w-full bg-slate-900 rounded-xl p-4 flex items-center gap-4 text-left border border-slate-800"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-white">Modo Desenvolvedor</p>
+              <p className="text-[10px] text-slate-400">Configurações avançadas e testes de API</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-500" />
+          </button>
+        </motion.div>
       </motion.div>
     </div>
   );
