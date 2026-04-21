@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDevMode } from '@/contexts/DevModeContext';
 
@@ -73,7 +73,12 @@ export function useSubscription() {
 
   const syncSubscriptionFromStripe = useCallback(async (): Promise<StripeSyncResult | null> => {
     try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
+      const { data, error } = await supabase.functions.invoke('check-subscription', {
+        body: {},
+        headers: {
+          'apikey': SUPABASE_PUBLISHABLE_KEY || '',
+        }
+      });
       if (error) throw error;
       return (data ?? null) as StripeSyncResult | null;
     } catch (error) {
@@ -181,7 +186,12 @@ export function useSubscription() {
 
   const openCheckout = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout');
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {},
+        headers: {
+          'apikey': SUPABASE_PUBLISHABLE_KEY || '',
+        }
+      });
       if (error) throw error;
       if (data?.url) {
         const w = window.open(data.url, '_blank');
@@ -194,7 +204,12 @@ export function useSubscription() {
 
   const openPortal = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        body: {},
+        headers: {
+          'apikey': SUPABASE_PUBLISHABLE_KEY || '',
+        }
+      });
       if (error) throw error;
       if (data?.url) window.open(data.url, '_blank');
     } catch (err: any) {

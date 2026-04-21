@@ -14,7 +14,9 @@ export function PricingPage() {
   const handleCheckout = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout');
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {},
+      });
       if (error) throw error;
       if (data?.url) {
         const w = window.open(data.url, '_blank');

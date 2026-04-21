@@ -1,31 +1,20 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const TEST_PRICE_ID = "price_1TMeFZRsLFesxj6XP8uecvEE";
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   console.log("--- Diagnóstico de Checkout Iniciado ---");
   
   try {
-    let body = {};
-    try {
-      body = await req.json();
-    } catch (e) {
-      console.log("Informação: Requisição sem corpo JSON ou corpo inválido.");
-    }
-
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     
@@ -67,11 +56,11 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("ERRO CRÍTICO NO CHECKOUT:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200, // Retornamos 200 com o objeto de erro para evitar que o navegador bloqueie por CORS
+      status: 400,
     });
   }
 });
