@@ -106,61 +106,70 @@ Você DEVE:
       },
     ];
 
-    const apiHeaders: Record<string, string> = {
-      "x-goog-api-key": geminiApiKey,
-      "Content-Type": "application/json",
-    };
-    const model = "gemini-1.5-flash"; // Voltando ao nome padrão, mas com o header de autenticação correto
+    const model = "gemini-1.5-flash";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    // Convert data URLs to Gemini format
+    const promptParts = [
+      { text: "Analise este cupom fiscal e extraia todos os dados estruturados." }
+    ];
+
+    images.forEach((img: string) => {
+      const matches = img.match(/^data:(.+);base64,(.+)$/);
+      if (matches) {
+        promptParts.push({
+          inlineData: {
+            mimeType: matches[1],
+            data: matches[2],
+          },
+        } as any);
+      }
+    });
+
+    const response = await fetch(apiUrl, {
       method: "POST",
-      headers: apiHeaders,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
+        system_instruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        contents: [
           {
             role: "user",
-            content: [
-              { type: "text", text: "Analise este cupom fiscal e extraia todos os dados." },
-              ...imageContent,
-            ],
+            parts: promptParts,
           },
         ],
-        tools,
-        tool_choice: { type: "function", function: { name: "extract_receipt_data" } },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: tools[0].function.parameters
+        },
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI API error:", response.status, errText);
-      if (response.status === 503) {
-        return respond(false, { error: "O modelo Gemini está com alta demanda no momento. Tente novamente em alguns instantes." });
+      console.error("Gemini API error:", response.status, errText);
+      
+      let errorMessage = "Erro na análise de IA. Tente novamente.";
+      if (response.status === 400 && (errText.includes("API_KEY_INVALID") || errText.includes("invalid key"))) {
+        errorMessage = "Chave API Gemini inválida. Verifique nas configurações.";
+      } else if (response.status === 429) {
+        errorMessage = "Limite de requisições excedido. Tente novamente em instantes.";
+      } else if (response.status === 503) {
+        errorMessage = "O modelo Gemini está temporariamente indisponível.";
       }
-      if (response.status === 429) {
-        return respond(false, { error: "Limite de requisições excedido. Tente novamente em alguns instantes." });
-      }
-      if (response.status === 400 && errText.includes("API_KEY_INVALID")) {
-        return respond(false, { error: "Chave API Gemini inválida. Verifique nas configurações." });
-      }
-      if (response.status === 401 || response.status === 403) {
-        return respond(false, { error: "Chave API Gemini inválida. Verifique nas configurações." });
-      }
-      if (response.status === 402) {
-        return respond(false, { error: "Créditos insuficientes para análise de IA." });
-      }
-      return respond(false, { error: "Erro na análise de IA. Tente novamente." });
+      
+      return respond(false, { error: errorMessage });
     }
 
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
+    const result = await response.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!text) {
       return respond(false, { error: "IA não retornou dados estruturados. Tente novamente." });
     }
 
-    const receiptData = JSON.parse(toolCall.function.arguments);
-
+    const receiptData = JSON.parse(text);
     return respond(true, { data: receiptData });
   } catch (e) {
     console.error("analyze-receipt error:", e);
