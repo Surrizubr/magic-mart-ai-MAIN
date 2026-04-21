@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,24 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+
+    // Manual Auth Check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return respond(false, { error: "Sem cabeçalho de autorização" });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error("Erro de autenticação:", authError);
+      return respond(false, { error: "Usuário não autenticado ou token inválido" });
+    }
+
     let body: { images?: string[], geminiApiKey?: string } = {};
     const text = await req.text();
     if (text) {

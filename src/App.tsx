@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DevModeProvider } from "@/contexts/DevModeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
@@ -22,16 +23,18 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <DevModeProvider>
         <LanguageProvider>
-          <TooltipProvider>
-            <Toaster position="top-center" />
-            <BrowserRouter>
-              <AuthGuard>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                </Routes>
-              </AuthGuard>
-            </BrowserRouter>
-          </TooltipProvider>
+          <SubscriptionProvider>
+            <TooltipProvider>
+              <Toaster position="top-center" />
+              <BrowserRouter>
+                <AuthGuard>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                  </Routes>
+                </AuthGuard>
+              </BrowserRouter>
+            </TooltipProvider>
+          </SubscriptionProvider>
         </LanguageProvider>
       </DevModeProvider>
     </QueryClientProvider>

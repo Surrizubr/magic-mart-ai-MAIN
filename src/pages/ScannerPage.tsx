@@ -5,8 +5,9 @@ import { PageHeader } from '@/components/PageHeader';
 import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { supabase } from '@/integrations/supabase/client';
+import { analyzeWithGemini, RECEIPT_PROMPT } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 import { getHistory, saveHistory, getStock, saveStock } from '@/data/mockData';
 
@@ -106,29 +107,13 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setProgressMsg('Imagens enviadas. Aguardando processamento da IA...');
 
       const geminiApiKey = localStorage.getItem('gemini-api-key') || '';
-      const { data, error: fnError } = await supabase.functions.invoke('analyze-receipt', {
-        body: { images: imgs, geminiApiKey },
-      });
+      const resultData = await analyzeWithGemini(imgs, RECEIPT_PROMPT, geminiApiKey);
 
       setProgressPercent(70);
       setProgressMsg('Resposta recebida. Processando itens...');
 
-      if (fnError) {
-        throw new Error(fnError.message || 'Erro ao analisar cupom');
-      }
-
-      if (!data?.ok) {
-        throw new Error(data?.error || 'Erro ao analisar cupom');
-      }
-
-      // Unwrap structured response
-      const result = data.data;
-
-      setProgressPercent(85);
-      setProgressMsg('Organizando produtos e calculando totais...');
-
       // Add IDs to items
-      const items: ReceiptItem[] = (result.items || []).map((item: any, i: number) => ({
+      const items: ReceiptItem[] = (resultData.items || []).map((item: any, i: number) => ({
         ...item,
         id: `ai-${i + 1}`,
         discount_amount: item.discount_amount || 0,

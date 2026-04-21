@@ -5,7 +5,9 @@ import { PageHeader } from '@/components/PageHeader';
 import { ArrowLeft, ListChecks, Camera, Search, MapPin, X, Plus, Minus, ShoppingCart, XCircle, CheckCircle } from 'lucide-react';
 import { TabId } from '@/types';
 import { toast } from 'sonner';
+import { analyzeWithGemini, PRODUCT_PROMPT } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 
 type ShoppingMode = null | 'list' | 'register' | 'category';
 
@@ -195,13 +197,36 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     }
   };
 
-  const captureAndRecognize = () => {
-    // Simulated recognition - in real app would use OCR/AI
-    const recognized = ['Arroz', 'Feijão', 'Macarrão', 'Azeite'][Math.floor(Math.random() * 4)];
-    setNewName(recognized);
-    setShowAddForm(true);
-    stopCamera();
-    toast.info(`Produto reconhecido: ${recognized}`);
+  const captureAndRecognize = async () => {
+    if (!videoRef.current) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(videoRef.current, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+    toast.loading('Analisando produto...', { id: 'ai-recognition' });
+
+    try {
+      const geminiApiKey = localStorage.getItem('gemini-api-key') || '';
+      const result = await analyzeWithGemini([dataUrl], PRODUCT_PROMPT, geminiApiKey);
+
+      const { product_name, category } = result;
+      setNewName(product_name || '');
+      setNewCategory(category || 'Outros');
+      setShowAddForm(true);
+      stopCamera();
+      toast.success(`Produto reconhecido: ${product_name}`, { id: 'ai-recognition' });
+    } catch (err: any) {
+      console.error('AI Recognition Error:', err);
+      toast.error('Não foi possível reconhecer o produto. Tente digitar o nome.', { id: 'ai-recognition' });
+      setShowAddForm(true);
+      stopCamera();
+    }
   };
 
   // Mode selection screen
