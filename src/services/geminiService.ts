@@ -1,43 +1,33 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { supabase, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
 
 export async function analyzeWithGemini(images: string[], prompt: string, providedApiKey?: string) {
-  // Use provided key or fallback to environment variable
-  const apiKey = providedApiKey || import.meta.env.VITE_GEMINI_API_KEY;
-  
-  if (!apiKey || apiKey === 'undefined') {
-    throw new Error("Chave API do Gemini não configurada. Por favor, configure nas definições.");
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  // Reverting to the most standard model name. If this fails, the error will be caught.
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-  const imageParts = images.map(img => {
-    const [header, data] = img.split(',');
-    const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
-    return {
-      inlineData: {
-        data,
-        mimeType
-      }
-    };
-  });
-
   try {
-    const result = await model.generateContent([prompt, ...imageParts]);
-    const response = await result.response;
-    const text = response.text();
-    
-    // Clean potentially malformed JSON (remove markdown blocks if present)
-    const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
-  } catch (error: any) {
-    console.error("Original Gemini Error Details:", {
-      message: error?.message,
-      status: error?.status,
-      stack: error?.stack,
-      model: "gemini-1.5-flash"
+    // We are now using the Supabase Edge Function 'analyze-receipt' as requested.
+    // This offloads the API key management and complex vision logic to the backend.
+    const { data, error } = await supabase.functions.invoke('analyze-receipt', {
+      body: { 
+        images, 
+        prompt, 
+        // If the user provided a key manually, we pass it so the edge function can use it if desired
+        sub_key: providedApiKey || localStorage.getItem('gemini-api-key') || undefined
+      },
+      headers: {
+        'apikey': SUPABASE_PUBLISHABLE_KEY || ''
+      }
     });
+
+    if (error) throw error;
+    
+    // The Edge Function typically returns the parsed JSON directly
+    return data;
+  } catch (error: any) {
+    console.error("Edge Function 'analyze-receipt' Error:", error);
+    
+    // Fallback error message if the function fails
+    const msg = error?.message || "Erro ao processar cupom via Edge Function";
+    if (msg.includes("API key")) {
+      throw new Error("Chave API do Gemini inválida ou expirada. Verifique suas configurações.");
+    }
     throw error;
   }
 }
