@@ -129,19 +129,14 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       return;
     }
 
+    let profile = await fetchProfile();
+
     if (devMode) {
       setStatus('active');
+      setInfo(profile);
       setLoading(false);
       return;
     }
-
-    // Fast-path: check cache first to avoid flickering if we already know it's active
-    const cached = localStorage.getItem(`sub_status_${user.id}`);
-    if (cached !== 'active' || forceSync) {
-        setLoading(true);
-    }
-
-    let profile = await fetchProfile();
 
     const shouldSyncWithStripe =
       forceSync ||
