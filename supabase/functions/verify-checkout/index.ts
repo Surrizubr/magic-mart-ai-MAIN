@@ -36,19 +36,17 @@ serve(async (req) => {
 
     let userId: string | null = null;
     let userEmail: string | null = null;
-    try {
-      const { data: claimsData } = await supabaseClient.auth.getClaims(token);
-      if (claimsData?.claims) {
-        userId = claimsData.claims.sub as string;
-        userEmail = claimsData.claims.email as string;
-      }
-    } catch (_) {}
-    if (!userId) {
-      const { data: { user } } = await supabaseClient.auth.getUser(token);
-      if (!user) throw new Error("Not authenticated");
-      userId = user.id;
-      userEmail = user.email ?? null;
+    
+    // Identificar o usuário
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    
+    if (userError || !user) {
+      log("Auth error", { error: userError?.message });
+      throw new Error(`Authentication failed: ${userError?.message}`);
     }
+    
+    userId = user.id;
+    userEmail = user.email ?? null;
     log("Authenticated", { userId, userEmail });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
