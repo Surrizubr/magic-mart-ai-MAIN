@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { toast } from 'sonner';
 import { Key, Send, Database, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react';
-import { GoogleGenAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 interface DevToolsPageProps {
   onBack: () => void;
@@ -35,7 +35,7 @@ export function DevToolsPage({ onBack }: DevToolsPageProps) {
     setTestResult({ status: 'loading', message: 'Testando conexão com Gemini...' });
 
     try {
-      const genAI = new GoogleGenAI(apiKey.trim());
+      const genAI = new GoogleGenerativeAI(apiKey.trim());
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
       
       const result = await model.generateContent("Responda apenas com a palavra 'OK' se você estiver recebendo esta mensagem.");
