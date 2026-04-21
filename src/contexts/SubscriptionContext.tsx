@@ -125,13 +125,11 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, [applySubscriptionState, fetchProfile, user, devMode, syncSubscriptionFromStripe]);
 
   useEffect(() => {
-    if (!user) return;
-
     const params = new URLSearchParams(window.location.search);
     const checkoutStatus = params.get('checkout');
     const sessionId = params.get('session_id');
 
-    if (checkoutStatus === 'success' && sessionId) {
+    if (user && checkoutStatus === 'success' && sessionId) {
       window.history.replaceState({}, '', window.location.pathname);
       (async () => {
         setLoading(true);
