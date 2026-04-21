@@ -4,7 +4,7 @@ export async function analyzeWithGemini(images: string[], prompt: string, apiKey
   if (!apiKey) throw new Error("Gemini API Key missing");
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
   const imageParts = images.map(img => {
     const [header, data] = img.split(',');
