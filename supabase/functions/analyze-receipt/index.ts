@@ -106,14 +106,13 @@ Você DEVE:
       },
     ];
 
-    const apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
     const apiHeaders: Record<string, string> = {
-      Authorization: `Bearer ${geminiApiKey}`,
+      "x-goog-api-key": geminiApiKey,
       "Content-Type": "application/json",
     };
-    const model = "gemini-1.5-flash";
+    const model = "gemini-1.5-flash"; // Voltando ao nome padrão, mas com o header de autenticação correto
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: apiHeaders,
       body: JSON.stringify({
