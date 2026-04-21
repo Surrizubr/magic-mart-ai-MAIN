@@ -20,7 +20,17 @@ serve(async (req) => {
   }
 
   try {
-    const { images, geminiApiKey } = await req.json();
+    let body: { images?: string[], geminiApiKey?: string } = {};
+    const text = await req.text();
+    if (text) {
+      try {
+        body = JSON.parse(text);
+      } catch (e) {
+        console.error("Erro ao processar JSON:", e);
+      }
+    }
+    
+    const { images, geminiApiKey } = body;
     if (!images || !Array.isArray(images) || images.length === 0) {
       return respond(false, { error: "No images provided" });
     }

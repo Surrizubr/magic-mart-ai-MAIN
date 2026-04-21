@@ -15,6 +15,16 @@ serve(async (req) => {
   }
 
   try {
+    let body = {};
+    const text = await req.text();
+    if (text) {
+      try {
+        body = JSON.parse(text);
+      } catch (e) {
+        // Silently ignore or log
+      }
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-18.acacia" });
 

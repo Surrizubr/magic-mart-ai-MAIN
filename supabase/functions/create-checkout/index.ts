@@ -19,6 +19,13 @@ serve(async (req) => {
   console.log("--- Diagnóstico de Checkout Iniciado ---");
   
   try {
+    let body = {};
+    try {
+      body = await req.json();
+    } catch (e) {
+      console.log("Informação: Requisição sem corpo JSON ou corpo inválido.");
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     

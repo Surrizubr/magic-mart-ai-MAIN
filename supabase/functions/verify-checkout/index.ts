@@ -20,7 +20,17 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id } = await req.json();
+    let body: { session_id?: string } = {};
+    const text = await req.text();
+    if (text) {
+      try {
+        body = JSON.parse(text);
+      } catch (e) {
+        log("Payload error", { details: "Invalid JSON body" });
+      }
+    }
+    
+    const { session_id } = body;
     if (!session_id) throw new Error("session_id is required");
 
     // Identify the authenticated user
