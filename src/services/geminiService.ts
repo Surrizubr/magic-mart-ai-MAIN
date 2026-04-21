@@ -2,14 +2,13 @@ import { supabase, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/clie
 
 export async function analyzeWithGemini(images: string[], prompt: string, providedApiKey?: string) {
   try {
-    // We are now using the Supabase Edge Function 'analyze-receipt' as requested.
-    // This offloads the API key management and complex vision logic to the backend.
+    const geminiApiKey = providedApiKey || localStorage.getItem('gemini-api-key') || '';
+    
+    // The edge function expects 'images' and 'geminiApiKey'
     const { data, error } = await supabase.functions.invoke('analyze-receipt', {
       body: { 
         images, 
-        prompt, 
-        // If the user provided a key manually, we pass it so the edge function can use it if desired
-        sub_key: providedApiKey || localStorage.getItem('gemini-api-key') || undefined
+        geminiApiKey
       },
       headers: {
         'apikey': SUPABASE_PUBLISHABLE_KEY || ''
@@ -18,27 +17,14 @@ export async function analyzeWithGemini(images: string[], prompt: string, provid
 
     if (error) throw error;
     
-    // Safety check: if 'data' is a string (common if Edge Func returns raw AI text), parse it.
-    let finalData = data;
-    if (typeof data === 'string') {
-      try {
-        const cleanJson = data.replace(/```json/g, '').replace(/```/g, '').trim();
-        finalData = JSON.parse(cleanJson);
-      } catch (e) {
-        console.error("Failed to parse Edge Function string as JSON:", data);
-        throw new Error("A IA retornou um formato inválido. Tente novamente.");
-      }
+    if (!data.ok) {
+      throw new Error(data.error || "Erro desconhecido na análise do cupom");
     }
     
-    return finalData;
-} catch (error: any) {
+    // The reference edge function returns { ok: true, data: receiptData }
+    return data.data;
+  } catch (error: any) {
     console.error("Edge Function 'analyze-receipt' Error:", error);
-    
-    // Fallback error message if the function fails
-    const msg = error?.message || "Erro ao processar cupom via Edge Function";
-    if (msg.includes("API key")) {
-      throw new Error("Chave API do Gemini inválida ou expirada. Verifique suas configurações.");
-    }
     throw error;
   }
 }
