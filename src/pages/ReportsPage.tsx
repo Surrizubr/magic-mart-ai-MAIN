@@ -34,7 +34,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     acc[h.product_name] = (acc[h.product_name] || 0) + h.quantity;
     return acc;
   }, {});
-  const topProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const topProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
 
   // Unique visits (store + date)
   const visitEntries = Array.from(new Set(history.map(h => `${h.store_name}|${h.purchase_date}`)))
@@ -208,15 +208,17 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         {topProducts.length > 0 ? (
           <div className="bg-card rounded-xl border border-border p-4">
             <h3 className="text-sm font-bold text-foreground mb-3">Mais Comprados</h3>
-            {topProducts.map(([name, count], i) => (
-              <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
-                  <span className="text-sm font-medium text-foreground uppercase">{name}</span>
+            <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin">
+              {topProducts.map(([name, count], i) => (
+                <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
+                    <span className="text-sm font-medium text-foreground uppercase">{name}</span>
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">{count}x</span>
                 </div>
-                <span className="text-sm font-medium text-muted-foreground">{count}x</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ) : (
           <div className="bg-card rounded-xl border border-border p-4 text-center">
@@ -228,24 +230,26 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         {topStores.length > 0 && (
           <div className="bg-card rounded-xl border border-border p-4">
             <h3 className="text-sm font-bold text-foreground mb-3">Locais Mais Visitados</h3>
-            {topStores.map(([name, data], i) => (
-              <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
-                  <div>
-                    <span className="text-sm font-medium text-foreground">{name}</span>
-                    <p className="text-[10px] text-muted-foreground">{data.count} {data.count === 1 ? 'visita' : 'visitas'}</p>
+            <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin">
+              {topStores.map(([name, data], i) => (
+                <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
+                    <div>
+                      <span className="text-sm font-medium text-foreground">{name}</span>
+                      <p className="text-[10px] text-muted-foreground">{data.count} {data.count === 1 ? 'visita' : 'visitas'}</p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => openMaps(name, data.lat, data.lng)}
+                    className="p-2 rounded-lg hover:bg-accent/50 transition-colors"
+                    title="Abrir no Google Maps"
+                  >
+                    <ExternalLink className="w-4 h-4 text-primary" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => openMaps(name, data.lat, data.lng)}
-                  className="p-2 rounded-lg hover:bg-accent/50 transition-colors"
-                  title="Abrir no Google Maps"
-                >
-                  <ExternalLink className="w-4 h-4 text-primary" />
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </motion.div>
