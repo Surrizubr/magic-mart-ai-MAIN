@@ -1,5 +1,5 @@
 import { supabase, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 
 export async function analyzeWithGemini(images: string[], prompt: string, providedApiKey?: string) {
   try {
@@ -64,7 +64,8 @@ export async function analyzeWithGemini(images: string[], prompt: string, provid
       contents: { parts: [{ text: prompt }, ...imageParts] },
       config: {
         responseMimeType: "application/json",
-        responseSchema
+        responseSchema,
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
       }
     });
 

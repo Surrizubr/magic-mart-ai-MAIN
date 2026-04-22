@@ -53,6 +53,9 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingThumbnail, setProcessingThumbnail] = useState<string | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
 
@@ -235,7 +238,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const max = 1200;
+        const max = 800; // Optimized size
         if (width > height) {
           if (width > max) {
             height *= max / width;
@@ -251,7 +254,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
+        resolve(canvas.toDataURL('image/jpeg', 0.7)); // Optimized quality
       };
       img.src = dataUrl;
     });
@@ -274,18 +277,21 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     if (!capturedImage) return;
 
     try {
-      setCameraStep('processing');
+      setProcessingThumbnail(capturedImage);
+      setIsProcessing(true);
+      stopCamera();
+      
       setProgress(10);
       
-      const interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         setProgress(prev => {
           if (prev >= 90) {
-            clearInterval(interval);
+            if (intervalRef.current) clearInterval(intervalRef.current);
             return 90;
           }
-          return prev + 5;
+          return prev + 10; // Faster progress steps
         });
-      }, 300);
+      }, 500);
 
       const compressedDataUrl = await compressImage(capturedImage);
       setProgress(40);
@@ -293,7 +299,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       const geminiApiKey = localStorage.getItem('gemini-api-key') || '';
       const result = await analyzeWithGemini([compressedDataUrl], PRODUCT_PROMPT, geminiApiKey);
       
-      clearInterval(interval);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setProgress(100);
 
       const { product_name, category } = result;
@@ -302,15 +308,29 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       setShowAddForm(true);
       
       setTimeout(() => {
-        stopCamera();
+        setIsProcessing(false);
+        setProcessingThumbnail(null);
+        setProgress(0);
         toast.success(`Produto reconhecido: ${product_name}`);
       }, 500);
     } catch (err: any) {
       console.error('AI Recognition Error:', err);
-      toast.error(err.message || 'Erro ao reconhecer produto.');
-      setShowAddForm(true);
-      stopCamera();
+      if (!err.message?.includes('aborted')) {
+        toast.error(err.message || 'Erro ao reconhecer produto.');
+      }
+      setIsProcessing(false);
+      setProcessingThumbnail(null);
+      setProgress(0);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
+  };
+
+  const cancelProcessing = () => {
+    setIsProcessing(false);
+    setProcessingThumbnail(null);
+    setProgress(0);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    toast.info('Reconhecimento cancelado');
   };
 
   // Mode selection screen
@@ -438,9 +458,6 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
                     playsInline
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
-                    <div className="w-full h-full border-2 border-white/50 border-dashed rounded-lg" />
-                  </div>
                   <div className="absolute top-6 left-0 right-0 flex justify-center">
                     <div className="bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
                       <p className="text-white text-sm font-medium">Aponte para o produto</p>
@@ -567,11 +584,41 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
 
       {/* Camera section for register mode */}
       {mode === 'register' && !cameraActive && (
-        <div className="px-4 pt-3">
+        <div className="px-4 pt-3 space-y-3">
           <button onClick={startCamera} className="w-full bg-card rounded-xl border border-border p-4 flex items-center justify-center gap-2">
             <Camera className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium text-foreground">Abrir câmera</span>
           </button>
+
+          {isProcessing && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-xl border border-primary/20 p-4 space-y-3"
+            >
+              <div className="flex items-center gap-3">
+                {processingThumbnail && (
+                  <div className="w-16 h-16 rounded-lg overflow-hidden border border-border shrink-0">
+                    <img src={processingThumbnail} className="w-full h-full object-cover" alt="Thumbnail" />
+                  </div>
+                )}
+                <div className="flex-1 space-y-1">
+                  <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-primary">
+                    <span>Reconhecendo...</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="h-1.5" />
+                  <p className="text-[10px] text-muted-foreground animate-pulse">A IA está identificando o item...</p>
+                </div>
+                <button 
+                  onClick={cancelProcessing}
+                  className="p-2 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
         </div>
       )}
 

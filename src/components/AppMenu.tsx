@@ -73,10 +73,12 @@ export function AppMenu({ open, onClose, initialSubMenu }: AppMenuProps) {
     try {
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: keyToTest });
-      const model = ai.getGenerativeModel({ model: "gemini-3-flash-preview" });
       
-      const response = await model.generateContent("Responda apenas com a palavra 'OK' se você estiver recebendo esta mensagem.");
-      const text = response.response.text() || '';
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: "Responda apenas com a palavra 'OK' se você estiver recebendo esta mensagem."
+      });
+      const text = response.text || '';
 
       if (text.includes('OK')) {
         setTestResult({ status: 'success', message: 'Conexão estabelecida com sucesso! A IA respondeu: ' + text });
