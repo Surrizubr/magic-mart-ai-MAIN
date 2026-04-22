@@ -3,13 +3,10 @@ import { motion } from 'framer-motion';
 import { Crown, Check, LogOut } from 'lucide-react';
 import { supabase, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useDevMode } from '@/contexts/DevModeContext';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
-import { toast } from 'sonner';
 
 export function PricingPage() {
   const { t, currency } = useLanguage();
-  const { setDevMode } = useDevMode();
   const { openCheckout, loading: checkoutLoading } = useSubscriptionContext();
   const [loading, setLoading] = useState(false);
 
@@ -76,15 +73,6 @@ export function PricingPage() {
             )}
           </button>
 
-          <button
-            onClick={() => {
-              setDevMode(true);
-              toast.success('Modo Desenvolvedor: Assinatura liberada!');
-            }}
-            className="w-full p-2 text-[10px] text-muted-foreground border border-dashed border-border rounded-lg hover:bg-accent transition-colors"
-          >
-            Ativar Modo Desenvolvedor (Bypass Stripe)
-          </button>
         </div>
 
         <button
