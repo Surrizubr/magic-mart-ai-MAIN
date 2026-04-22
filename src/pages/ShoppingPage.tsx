@@ -2,12 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { ArrowLeft, ListChecks, Camera, Search, MapPin, X, Plus, Minus, ShoppingCart, XCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ListChecks, Camera, Search, MapPin, X, Plus, Minus, ShoppingCart, XCircle, CheckCircle, Loader2, RotateCcw, Send } from 'lucide-react';
 import { TabId } from '@/types';
 import { toast } from 'sonner';
 import { analyzeWithGemini, PRODUCT_PROMPT } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 
 type ShoppingMode = null | 'list' | 'register' | 'category';
 
@@ -46,6 +48,10 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraStep, setCameraStep] = useState<'idle' | 'scanning' | 'captured' | 'processing'>('idle');
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
 
@@ -178,8 +184,6 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     onNavigate('home');
   };
 
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-
   useEffect(() => {
     if (cameraStream && videoRef.current) {
       videoRef.current.srcObject = cameraStream;
@@ -191,9 +195,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       setCameraStream(stream);
       setCameraActive(true);
-      
-      // We'll set the srcObject in a useEffect or directly if ref is available later
-      // But actually, setting it in the render is safer or using a ref combined with stream state
+      setCameraStep('scanning');
     } catch (err: any) {
       console.error('Camera Access Error:', err);
       toast.error('Não foi possível acessar a câmera: ' + (err.message || 'Permissão negada'));
@@ -206,6 +208,9 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       setCameraStream(null);
     }
     setCameraActive(false);
+    setCameraStep('idle');
+    setCapturedImage(null);
+    setProgress(0);
   };
 
   const compressImage = (dataUrl: string): Promise<string> => {
@@ -237,38 +242,57 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     });
   };
 
-  const captureAndRecognize = async () => {
+  const captureImage = () => {
     if (!videoRef.current) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx || canvas.width === 0) return;
+    ctx.drawImage(videoRef.current, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    setCapturedImage(dataUrl);
+    setCameraStep('captured');
+  };
+
+  const processAndRecognize = async () => {
+    if (!capturedImage) return;
 
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx || canvas.width === 0) {
-        throw new Error('Câmera não está pronta ou sem imagem.');
-      }
-
-      ctx.drawImage(videoRef.current, 0, 0);
-      const originalDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      setCameraStep('processing');
+      setProgress(10);
       
-      toast.loading('Otimizando e analisando produto...', { id: 'ai-recognition' });
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 5;
+        });
+      }, 300);
 
-      // Compress first
-      const compressedDataUrl = await compressImage(originalDataUrl);
+      const compressedDataUrl = await compressImage(capturedImage);
+      setProgress(40);
 
       const geminiApiKey = localStorage.getItem('gemini-api-key') || '';
       const result = await analyzeWithGemini([compressedDataUrl], PRODUCT_PROMPT, geminiApiKey);
+      
+      clearInterval(interval);
+      setProgress(100);
 
       const { product_name, category } = result;
       setNewName(product_name || '');
       setNewCategory(category || 'Outros');
       setShowAddForm(true);
-      stopCamera();
-      toast.success(`Produto reconhecido: ${product_name}`, { id: 'ai-recognition' });
+      
+      setTimeout(() => {
+        stopCamera();
+        toast.success(`Produto reconhecido: ${product_name}`);
+      }, 500);
     } catch (err: any) {
       console.error('AI Recognition Error:', err);
-      toast.error(err.message || 'Erro ao reconhecer produto.', { id: 'ai-recognition' });
+      toast.error(err.message || 'Erro ao reconhecer produto.');
       setShowAddForm(true);
       stopCamera();
     }
@@ -381,6 +405,124 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
   // Active shopping session
   return (
     <div className="pb-20">
+      {/* Camera Full Screen Overlay */}
+      <AnimatePresence>
+        {cameraActive && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black flex flex-col"
+          >
+            <div className="relative flex-1">
+              {cameraStep === 'scanning' && (
+                <>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
+                    <div className="w-full h-full border-2 border-white/50 border-dashed rounded-lg" />
+                  </div>
+                  <div className="absolute top-6 left-0 right-0 flex justify-center">
+                    <div className="bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                      <p className="text-white text-sm font-medium">Aponte para o produto</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {cameraStep === 'captured' && capturedImage && (
+                <>
+                  <img src={capturedImage} className="w-full h-full object-cover" alt="Captured" />
+                  <div className="absolute inset-0 bg-black/20" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="bg-black/60 backdrop-blur-lg p-6 rounded-2xl border border-white/20 text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+                        <CheckCircle className="w-6 h-6 text-primary" />
+                      </div>
+                      <p className="text-white font-bold">Imagem capturada!</p>
+                      <p className="text-white/70 text-xs">Deseja usar esta foto para identificação?</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {cameraStep === 'processing' && (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 p-8 space-y-8">
+                  <div className="relative">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                      className="w-24 h-24 rounded-full border-t-2 border-primary"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    </div>
+                  </div>
+                  
+                  <div className="w-full max-w-xs space-y-4 text-center">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-primary/70">
+                        <span>Analisando Produto</span>
+                        <span>{progress}%</span>
+                      </div>
+                      <Progress value={progress} className="h-2 bg-white/5" />
+                    </div>
+                    <p className="text-white font-medium animate-pulse">A Inteligência Artificial está identificando o item...</p>
+                    <p className="text-white/40 text-[10px] uppercase tracking-tighter">Isso pode levar alguns segundos</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Camera Controls */}
+            {cameraStep !== 'processing' && (
+              <div className="bg-black p-6 pb-10 flex items-center justify-between gap-4">
+                {cameraStep === 'scanning' ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="flex-1 text-white hover:bg-white/10"
+                      onClick={stopCamera}
+                    >
+                      Cancelar
+                    </Button>
+                    <button
+                      onClick={captureImage}
+                      className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1"
+                    >
+                      <div className="w-full h-full rounded-full bg-white active:scale-95 transition-transform" />
+                    </button>
+                    <div className="flex-1" /> {/* Spacer */}
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="destructive"
+                      className="flex-1 h-12 text-sm font-bold"
+                      onClick={() => setCameraStep('scanning')}
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Recusar
+                    </Button>
+                    <Button
+                      className="flex-1 h-12 gradient-primary text-primary-foreground text-sm font-bold"
+                      onClick={processAndRecognize}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Aceitar
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <PageHeader
         title="Compras em andamento"
         subtitle={storeName}
@@ -409,26 +551,12 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       </div>
 
       {/* Camera section for register mode */}
-      {mode === 'register' && (
+      {mode === 'register' && !cameraActive && (
         <div className="px-4 pt-3">
-          {!cameraActive ? (
-            <button onClick={startCamera} className="w-full bg-card rounded-xl border border-border p-4 flex items-center justify-center gap-2">
-              <Camera className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium text-foreground">Abrir câmera</span>
-            </button>
-          ) : (
-            <div className="relative rounded-xl overflow-hidden">
-              <video ref={videoRef} autoPlay playsInline className="w-full h-48 object-cover bg-black" />
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
-                <button onClick={captureAndRecognize} className="px-4 py-2 rounded-lg gradient-primary text-primary-foreground text-xs font-bold">
-                  Capturar
-                </button>
-                <button onClick={stopCamera} className="px-4 py-2 rounded-lg bg-card border border-border text-foreground text-xs font-bold">
-                  Fechar
-                </button>
-              </div>
-            </div>
-          )}
+          <button onClick={startCamera} className="w-full bg-card rounded-xl border border-border p-4 flex items-center justify-center gap-2">
+            <Camera className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium text-foreground">Abrir câmera</span>
+          </button>
         </div>
       )}
 

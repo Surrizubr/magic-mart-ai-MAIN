@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Globe, Settings, Info, RotateCcw, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle, CreditCard, RefreshCw, Undo2, LogOut } from 'lucide-react';
+import { X, Palette, Globe, Settings, Info, RotateCcw, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle, CreditCard, RefreshCw, Undo2, LogOut, Send, Database, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { useLanguage, Lang } from '@/contexts/LanguageContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -44,14 +44,61 @@ export function AppMenu({ open, onClose, initialSubMenu }: AppMenuProps) {
         setGeminiKey(saved || '');
       }
       setSubMenu(initialSubMenu);
-    } else if (!open) {
+    }
+    
+    if (!open) {
       setSubMenu(null);
+      setTestResult({ status: 'idle', message: '' });
     }
   }, [open, initialSubMenu]);
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [geminiKey, setGeminiKey] = useState('');
   const [geminiHasKey, setGeminiHasKey] = useState(() => !!localStorage.getItem('gemini-api-key'));
+
+    const [testResult, setTestResult] = useState<{ status: 'idle' | 'loading' | 'success' | 'error', message: string }>({
+    status: 'idle',
+    message: ''
+  });
+
+  const testConnectivity = async () => {
+    const keyToTest = geminiKey.trim() || localStorage.getItem('gemini-api-key') || '';
+    if (!keyToTest) {
+      toast.error('Informe a chave API antes de testar.');
+      return;
+    }
+
+    setTestResult({ status: 'loading', message: 'Testando conexão com Gemini...' });
+
+    try {
+      const { GoogleGenAI } = await import("@google/genai");
+      const ai = new GoogleGenAI({ apiKey: keyToTest });
+      const model = ai.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      
+      const response = await model.generateContent("Responda apenas com a palavra 'OK' se você estiver recebendo esta mensagem.");
+      const text = response.response.text() || '';
+
+      if (text.includes('OK')) {
+        setTestResult({ status: 'success', message: 'Conexão estabelecida com sucesso! A IA respondeu: ' + text });
+      } else {
+        setTestResult({ status: 'error', message: 'A IA respondeu, mas o conteúdo foi inesperado: ' + text });
+      }
+    } catch (error: any) {
+      console.error('Gemini Test Error:', error);
+      setTestResult({ status: 'error', message: 'Erro na conexão: ' + (error.message || 'Erro desconhecido') });
+    }
+  };
+
+  const checkSubscriptionData = () => {
+    if (info) {
+      setTestResult({ 
+        status: 'success', 
+        message: `Perfil (Supabase): ${info.display_name} (${info.email}). Stripe Status: ${info.stripe_status}` 
+      });
+    } else {
+      setTestResult({ status: 'error', message: 'Dados do perfil não carregados no SubscriptionContext. Tente atualizar a página.' });
+    }
+  };
 
   // Check if within 30 days of subscription start (for refund eligibility)
   const [canRefund, setCanRefund] = useState(false);
@@ -211,6 +258,46 @@ export function AppMenu({ open, onClose, initialSubMenu }: AppMenuProps) {
                   {t('geminiSave')}
                 </button>
               </div>
+
+              {/* Test Actions */}
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <button 
+                  onClick={testConnectivity}
+                  className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-accent/30 hover:bg-accent/50 transition-colors gap-1"
+                >
+                  <Send className="w-4 h-4 text-primary" />
+                  <span className="text-[10px] font-bold text-center">Testar Conexão IA</span>
+                </button>
+
+                <button 
+                  onClick={checkSubscriptionData}
+                  className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-accent/30 hover:bg-accent/50 transition-colors gap-1"
+                >
+                  <Database className="w-4 h-4 text-primary" />
+                  <span className="text-[10px] font-bold text-center">Ver Dados Perfil</span>
+                </button>
+              </div>
+
+              {/* Results Console */}
+              {testResult.status !== 'idle' && (
+                <div className={`mt-3 p-3 rounded-lg border flex gap-2 ${
+                  testResult.status === 'loading' ? 'bg-accent/20 border-border' :
+                  testResult.status === 'success' ? 'bg-green-500/10 border-green-500/30' :
+                  'bg-destructive/10 border-destructive/30'
+                }`}>
+                  {testResult.status === 'loading' ? (
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent animate-spin rounded-full mt-0.5 shrink-0" />
+                  ) : testResult.status === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                  )}
+                  <div className="space-y-0.5 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-tight">Diagnóstico</p>
+                    <p className="text-xs text-foreground break-words line-clamp-3">{testResult.message}</p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="bg-accent/50 rounded-xl border border-border p-4">
               <div className="flex items-center gap-2 mb-2">
