@@ -1,10 +1,13 @@
+import { motion } from 'framer-motion';
+import { lovable } from '@/integrations/lovable/index';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { motion } from 'framer-motion';
+import { useDevMode } from '@/contexts/DevModeContext';
 
 export function LoginPage() {
   const { t } = useLanguage();
+  const { setDevMode } = useDevMode();
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -19,28 +22,23 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 space-y-12">
-      <div className="text-center space-y-4">
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center mx-auto shadow-lg"
-        >
-          <span className="text-4xl text-white">🌿</span>
-        </motion.div>
-        
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight text-foreground">Magicmart AI</h1>
-          <p className="text-sm text-muted-foreground font-medium italic opacity-80">
-            {t('appTagline') || 'Sua despensa inteligente'}
-          </p>
+    <div className="min-h-screen bg-background flex items-center justify-center px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-sm space-y-8"
+      >
+        <div className="text-center space-y-3">
+          <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto">
+            <span className="text-3xl">🌿</span>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Magicmart AI</h1>
+          <p className="text-sm text-muted-foreground">{t('appTagline') || 'Sua despensa inteligente'}</p>
         </div>
-      </div>
 
-      <div className="w-full max-w-sm space-y-6">
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 p-4 rounded-xl border border-border bg-card hover:bg-accent transition-all shadow-sm active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-accent transition-colors"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -48,25 +46,30 @@ export function LoginPage() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
-          <span className="text-sm font-bold text-foreground">{t('loginWithGoogle') || 'Entrar com Google'}</span>
+          <span className="text-sm font-medium text-foreground">{t('loginWithGoogle')}</span>
         </button>
 
-        <p className="text-center text-[11px] text-muted-foreground/60 px-8 leading-relaxed">
+        <button
+          onClick={() => {
+            setDevMode(true);
+            toast.success('Modo Desenvolvedor ativado!');
+          }}
+          className="w-full flex items-center justify-center gap-3 p-3 rounded-xl border border-dashed border-border bg-transparent hover:bg-accent/50 transition-colors opacity-50 hover:opacity-100"
+        >
+          <span className="text-xs font-medium text-muted-foreground">Ativar Modo Desenvolvedor</span>
+        </button>
+
+        <p className="text-center text-[10px] text-muted-foreground/70 mt-4">
           Ao continuar, você concorda com nossos{' '}
-          <a href="https://www.idapps.com.br/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
+          <a href="https://www.idapps.com.br/terms" target="_blank" rel="noopener noreferrer" className="underline">
             Termos de Uso
           </a>{' '}
           e{' '}
-          <a href="https://www.idapps.com.br/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
+          <a href="https://www.idapps.com.br/privacy" target="_blank" rel="noopener noreferrer" className="underline">
             Política de Privacidade
           </a>
         </p>
-      </div>
-
-      <div className="fixed bottom-6 text-[9px] text-muted-foreground/30 font-bold uppercase tracking-widest text-center">
-        Magicmart AI • AI-Powered Pantry Management<br/>
-        v2.0.4 • © 2024
-      </div>
+      </motion.div>
     </div>
   );
 }

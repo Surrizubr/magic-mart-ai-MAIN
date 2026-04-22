@@ -1,33 +1,37 @@
+import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { Menu } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
   action?: ReactNode;
-  onMenuOpen?: () => void;
+  left?: ReactNode;
+  onBack?: () => void;
 }
 
-export function PageHeader({ title, subtitle, action, onMenuOpen }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, action, left, onBack }: PageHeaderProps) {
   return (
-    <header className="px-6 py-6 pb-2 space-y-4">
+    <motion.header
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-3"
+    >
       <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black text-foreground tracking-tight">{title}</h1>
-          {subtitle && <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{subtitle}</p>}
-        </div>
-        <div className="flex items-center gap-2">
-          {action}
-          {onMenuOpen && (
-            <button 
-              onClick={onMenuOpen}
-              className="w-10 h-10 rounded-xl bg-card border border-border flex items-center justify-center text-foreground shadow-sm active:scale-95 transition-all"
-            >
-              <Menu className="w-5 h-5" />
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button onClick={onBack} className="p-1 -ml-1 rounded-lg hover:bg-accent transition-colors">
+              <ArrowLeft className="w-5 h-5 text-foreground" />
             </button>
           )}
+          {left}
+          <div>
+            <h1 className="text-lg font-bold text-foreground">{title}</h1>
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          </div>
         </div>
+        {action}
       </div>
-    </header>
+    </motion.header>
   );
 }
