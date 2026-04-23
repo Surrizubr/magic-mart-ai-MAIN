@@ -10,25 +10,24 @@ export function useAuth() {
 
   useEffect(() => {
     if (devMode) {
-      // Simulate a logged-in developer user
       setUser({
         id: 'dev-user',
         email: 'dev@example.com',
         aud: 'authenticated',
         created_at: new Date().toISOString(),
         role: 'authenticated',
-        // other fields as needed
       } as User);
       setLoading(false);
       return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (session) setUser(session.user);
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });

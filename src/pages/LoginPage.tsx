@@ -10,14 +10,60 @@ export function LoginPage() {
   const { setDevMode } = useDevMode();
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) {
-      toast.error(error.message || 'Erro ao fazer login com Google');
+    console.log('[Login] Starting Google login with Popup...');
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          //redirectTo: window.location.origin, // Supabase handles this better with popup
+          skipBrowserRedirect: true,
+          queryParams: {
+            prompt: 'select_account',
+          }
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Abre o link do Google em uma nova janela (Popup)
+        const width = 500;
+        const height = 600;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+        
+        const popup = window.open(
+          data.url,
+          'google-login',
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+
+        if (!popup) {
+          toast.error('O bloqueador de popups impediu o login. Por favor, autorize popups.');
+          return;
+        }
+
+        // Monitora o fechamento da janela ou mudança de URL para detectar sucesso
+        const checkPopup = setInterval(async () => {
+          try {
+            if (popup.closed) {
+              clearInterval(checkPopup);
+              console.log('[Login] Popup closed, checking session...');
+              const { data: sessionData } = await supabase.auth.getSession();
+              if (sessionData.session) {
+                toast.success('Login realizado com sucesso!');
+                // O useAuth detectará a mudança de estado automaticamente
+              }
+            }
+          } catch (e) {
+            // Ignora erros de cross-origin antes do redirecionamento final
+          }
+        }, 1000);
+      }
+    } catch (err: any) {
+      console.error('[Login] Error:', err);
+      toast.error(err.message || 'Erro ao iniciar login');
     }
   };
 

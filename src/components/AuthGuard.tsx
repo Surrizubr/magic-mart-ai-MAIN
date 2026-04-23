@@ -22,7 +22,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  if (!user) {
+  if (!user && !devMode) {
     return <LoginPage />;
   }
 
