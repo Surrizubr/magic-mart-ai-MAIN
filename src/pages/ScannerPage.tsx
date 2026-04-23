@@ -132,25 +132,27 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
   const processImages = async (imgs: string[]) => {
     setStep('processing');
     setProgressPercent(10);
-    setProgressMsg(t('optimizeImages'));
+    setProgressMsg('Otimizando imagens...');
     setError(null);
 
     try {
+      // Compress all images first
       const compressedImgs = await Promise.all(imgs.map(img => compressImage(img)));
       
       setProgressPercent(20);
-      setProgressMsg(t('sendingImages'));
+      setProgressMsg('Enviando imagens para análise...');
 
       const geminiApiKey = localStorage.getItem('gemini-api-key') || '';
       if (!geminiApiKey) {
-        throw new Error(t('missingApiKeyError'));
+        throw new Error('Chave API não encontrada. Por favor, configure-a no Menu > Configurações.');
       }
 
       const resultData = await analyzeWithGemini(compressedImgs, RECEIPT_PROMPT, geminiApiKey);
 
       setProgressPercent(70);
-      setProgressMsg(t('processingResponse'));
+      setProgressMsg('Resposta recebida. Processando itens...');
 
+      // Add IDs to items and normalize fields if necessary
       const items: ReceiptItem[] = (resultData.items || []).map((item: any, i: number) => {
         const product_name = item.product_name || item.name || 'Produto sem nome';
         const quantity = Number(item.quantity) || 1;
@@ -188,7 +190,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setOriginalDiscounts(discountMap);
 
       setProgressPercent(100);
-      setProgressMsg(t('completingAnalysis'));
+      setProgressMsg('Concluído!');
 
       const finalResult: AIReceiptResult = {
         store_name: resultData.store_name || 'Mercado Desconhecido',
@@ -377,7 +379,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
   if (mode === 'choose') {
     return (
       <div className="pb-20">
-        <PageHeader title={t('scan')} subtitle={t('digitalizeReceipts')} onBack={onBack} />
+        <PageHeader title="Scanner" subtitle="Digitalize cupons fiscais" onBack={onBack} />
         <div className="p-4 space-y-4">
           {(() => {
             const hasKey = !!localStorage.getItem('gemini-api-key');
@@ -392,7 +394,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                     onClick={() => onOpenMenu?.()} 
                     className="text-sm text-primary font-semibold mt-1 underline underline-offset-2 hover:opacity-80 transition-opacity"
                   >
-                    {t('scannerGoToSettings')}
+                    Abrir Configurações da Chave API
                   </button>
                 </div>
               </div>
@@ -416,9 +418,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
               <Camera className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-card-foreground">{t('singlePhoto')}</p>
+              <p className="text-sm font-semibold text-card-foreground">Foto Única</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {t('singlePhotoDesc')}
+                Para cupons pequenos que cabem em uma única foto
               </p>
             </div>
           </motion.button>
@@ -440,9 +442,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
               <Images className="w-6 h-6 text-accent-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-card-foreground">{t('multiPhoto')}</p>
+              <p className="text-sm font-semibold text-card-foreground">Múltiplas Fotos</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {t('multiPhotoDesc')}
+                Para cupons longos — tire várias fotos e a IA consolida tudo
               </p>
             </div>
           </motion.button>
@@ -458,9 +460,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
               <History className="w-6 h-6 text-secondary-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-card-foreground">{t('scannerHistory')}</p>
+              <p className="text-sm font-semibold text-card-foreground">Histórico de Cupons</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {t('scannerHistoryDesc')}
+                Veja todos os cupons escaneados e gerencie seus registros
               </p>
             </div>
           </motion.button>
@@ -478,30 +480,30 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-foreground">
-                  {t('aiScannerTitle')}
+                  Scanner com Inteligência Artificial
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t('aiScannerDesc')}
+                  O escâner utiliza IA para detectar e extrair texto dos cupons fiscais automaticamente. Para funcionar, é necessária uma chave API do Gemini, que pode ser obtida gratuitamente.
                 </p>
               </div>
             </div>
 
             <div className="border-t border-border/50 pt-3 mt-2">
               <p className="text-xs font-semibold text-foreground mb-2">
-                {t('getApiKeyHowTo')}
+                Como obter sua chave API gratuita:
               </p>
               <ol className="text-xs text-muted-foreground space-y-1.5 pl-4 list-decimal">
                 <li>Acesse <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="font-mono text-primary underline">https://aistudio.google.com/apikey</a></li>
-                <li>{t('loginToGoogle')}</li>
-                <li>{t('clickCreateKey')}</li>
-                <li>{t('copyKey')}</li>
+                <li>Faça login com sua conta Google</li>
+                <li>Clique em <span className="font-semibold text-foreground">"Create API Key"</span></li>
+                <li>Copie a chave gerada</li>
                 <li>
-                  {t('pasteInSettings')}{' '}
+                  Cole a chave em:{' '}
                   <button
                     onClick={() => onOpenMenu?.()}
                     className="text-primary font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity inline"
                   >
-                    {t('menu')} → {t('geminiApiKey')}
+                    Menu → Configurações → Chave API Gemini
                   </button>
                 </li>
               </ol>
@@ -517,15 +519,15 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
     return (
       <div className="pb-20">
         <PageHeader
-          title={t('scannerHistory')}
-          subtitle={`${scannedReceipts.length} ${t('scannedReceiptsLabel')}`}
+          title="Histórico de Cupons"
+          subtitle={`${scannedReceipts.length} cupons escaneados`}
           onBack={reset}
         />
         <div className="p-4 space-y-3">
           {scannedReceipts.length === 0 ? (
             <div className="text-center py-12 space-y-3">
               <History className="w-12 h-12 text-muted-foreground mx-auto" />
-              <p className="text-sm text-muted-foreground">{t('noReceiptsScanned')}</p>
+              <p className="text-sm text-muted-foreground">Nenhum cupom escaneado ainda.</p>
             </div>
           ) : (
             scannedReceipts.map((receipt) => (
@@ -539,10 +541,10 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-card-foreground truncate">{receipt.store_name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {new Date(receipt.date + 'T12:00:00').toLocaleDateString(lang === 'english' ? 'en-US' : lang === 'spanish' ? 'es-ES' : 'pt-BR')}
+                      {new Date(receipt.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {receipt.items.length} {receipt.items.length === 1 ? t('historyItemCount') : t('historyItemsCount')} — {fc(receipt.total)}
+                      {receipt.items.length} {receipt.items.length === 1 ? 'item' : 'itens'} — {fc(receipt.total)}
                     </p>
                   </div>
                 </div>
@@ -552,14 +554,14 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                     className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    {t('seeItems')}
+                    Ver itens
                   </button>
                   <button
                     onClick={() => setConfirmDeleteId(receipt.receipt_id)}
                     className="flex items-center gap-1.5 text-xs font-medium text-destructive hover:underline"
                   >
                     <X className="w-3.5 h-3.5" />
-                    {t('delete')}
+                    Excluir
                   </button>
                 </div>
               </motion.div>
@@ -584,9 +586,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 onClick={e => e.stopPropagation()}
                 className="bg-card rounded-xl shadow-elevated p-6 w-full max-w-sm space-y-4"
               >
-                <p className="text-sm font-semibold text-card-foreground">{t('deleteReceiptConfirm')}</p>
+                <p className="text-sm font-semibold text-card-foreground">Excluir cupom?</p>
                 <p className="text-xs text-muted-foreground">
-                  {t('deleteReceiptDesc')}
+                  Todos os itens deste cupom serão removidos do histórico e do estoque. Esta ação não pode ser desfeita.
                 </p>
                 <div className="flex gap-3">
                   <Button
@@ -594,7 +596,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                     className="flex-1"
                     onClick={() => setConfirmDeleteId(null)}
                   >
-                    {t('no')}
+                    Não
                   </Button>
                   <Button
                     variant="destructive"
@@ -606,7 +608,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                       setTimeout(() => setMode('history'), 0);
                     }}
                   >
-                    {t('yesDelete')}
+                    Sim, excluir
                   </Button>
                 </div>
               </motion.div>
@@ -621,7 +623,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
   if (step === 'processing') {
     return (
       <div className="pb-20">
-        <PageHeader title={t('scan')} subtitle={t('analyzingWithAI')} />
+        <PageHeader title="Scanner" subtitle="Analisando com IA..." />
         <div className="p-4 flex flex-col items-center justify-center min-h-[60vh] space-y-6">
           <motion.div
             animate={{ rotate: 360 }}
@@ -633,7 +635,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
             <Progress value={progressPercent} className="h-3" />
             <p className="text-sm font-medium text-foreground text-center">{progressMsg}</p>
             <p className="text-xs text-muted-foreground text-center">
-              {progressPercent}% {t('completedPercent')}
+              {progressPercent}% concluído
             </p>
           </div>
         </div>
@@ -648,8 +650,8 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
     return (
       <div className="pb-20">
         <PageHeader
-          title={t('results')}
-          subtitle={`${result.items.length} ${t('foundItemsSubtitle')}`}
+          title="Resultado"
+          subtitle={`${result.items.length} itens encontrados`}
           onBack={reset}
         />
         <div className="p-4 space-y-4">
@@ -671,14 +673,14 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
             {/* Date */}
             <div className="bg-secondary/50 rounded-lg p-3 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-foreground">{t('purchaseDateLabel')}</span>
+                <span className="text-xs font-medium text-foreground">📅 Data da compra:</span>
                 {result.date === new Date().toISOString().slice(0, 10) ? (
                   <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">
-                    {t('dateNotFound')}
+                    Data não encontrada
                   </span>
                 ) : (
                   <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-medium">
-                    {t('extractedFromReceipt')}
+                    Extraída do cupom
                   </span>
                 )}
               </div>
@@ -689,35 +691,36 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 className={`w-full p-2 rounded-lg border bg-background text-foreground text-sm outline-none focus:ring-2 ring-primary/30 ${dateError ? 'border-destructive' : 'border-border'}`}
               />
               {dateError && (
-                <p className="text-xs text-destructive font-medium">⚠️ {t('fillDateWarning')}</p>
+                <p className="text-xs text-destructive font-medium">⚠️ Preencha a data da compra antes de salvar.</p>
               )}
             </div>
 
             {/* Totals */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t('sumOriginal')}:</span>
+                <span className="text-xs text-muted-foreground">Soma dos itens (original):</span>
                 <span className="text-sm font-semibold text-foreground">{fc(result.items_sum)}</span>
               </div>
               {result.discount != null && result.discount > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{t('discountApplied')}:</span>
+                  <span className="text-xs text-muted-foreground">Desconto aplicado:</span>
                   <span className="text-sm font-semibold text-green-600">- {fc(result.discount)}</span>
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t('sumWithDiscount')}:</span>
+                <span className="text-xs text-muted-foreground">Soma com desconto:</span>
                 <span className="text-sm font-bold text-primary">{fc(result.discounted_sum)}</span>
               </div>
               <div className="flex items-center justify-between border-t border-border pt-1.5">
-                <span className="text-xs font-medium text-foreground">{t('receiptTotalKey')}:</span>
+                <span className="text-xs font-medium text-foreground">Total do cupom:</span>
                 <span className="text-sm font-bold text-primary">{fc(result.receipt_total)}</span>
               </div>
               {hasDifference && (
                 <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 mt-1">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <span className="text-xs text-amber-700 dark:text-amber-400">
-                    {t('differenceWarningPrefix')} {fc(result.difference)} {t('differenceWarningSuffix')}
+                    Diferença de {fc(result.difference)} entre o total do cupom e a soma dos itens.
+                    Algum item pode não ter sido identificado corretamente. Ajuste preços, quantidades, ou adicione/remova itens abaixo.
                   </span>
                 </div>
               )}
@@ -738,7 +741,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 className="w-full gradient-primary text-primary-foreground border-0 h-11"
               >
                 <Package className="w-4 h-4 mr-2" />
-                {t('saveToStock')}
+                Salvar no Estoque e Histórico
               </Button>
               {/* Discount toggle buttons */}
               {originalDiscounts.size > 0 && (
@@ -766,7 +769,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                     className="flex-1 h-9 text-xs"
                     disabled={result.items.some(i => i.discount_amount > 0)}
                   >
-                    ✅ {t('applyDiscounts')}
+                    ✅ Aplicar descontos
                   </Button>
                   <Button
                     variant={result.items.every(i => i.discount_amount === 0) ? "default" : "outline"}
@@ -788,7 +791,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                     className="flex-1 h-9 text-xs"
                     disabled={result.items.every(i => i.discount_amount === 0)}
                   >
-                    ❌ {t('withoutDiscounts')}
+                    ❌ Sem descontos
                   </Button>
                 </div>
               )}
@@ -813,11 +816,11 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                         value={item.product_name}
                         onChange={e => updateItem(item.id, 'product_name', e.target.value)}
                         className="text-sm font-medium text-card-foreground bg-background border border-border rounded px-2 py-1.5 w-full outline-none focus:ring-2 ring-primary/30"
-                        placeholder={t('productNamePlaceholder')}
+                        placeholder="Nome do produto"
                       />
                       <div className="flex gap-2">
                         <div className="flex-1">
-                          <label className="text-[10px] text-muted-foreground">{t('qtyLabel')}</label>
+                          <label className="text-[10px] text-muted-foreground">Qtd</label>
                           <input
                             type="number"
                             step="0.001"
@@ -827,7 +830,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                           />
                         </div>
                         <div className="w-16">
-                          <label className="text-[10px] text-muted-foreground">{t('unitLabel')}</label>
+                          <label className="text-[10px] text-muted-foreground">Un</label>
                           <select
                             value={item.unit}
                             onChange={e => updateItem(item.id, 'unit', e.target.value)}
@@ -839,7 +842,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                           </select>
                         </div>
                         <div className="flex-1">
-                          <label className="text-[10px] text-muted-foreground">{t('unitPriceLabel')}</label>
+                          <label className="text-[10px] text-muted-foreground">Preço un.</label>
                           <input
                             type="number"
                             step="0.01"
@@ -851,7 +854,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                       </div>
                       <div className="flex gap-2">
                         <div className="flex-1">
-                          <label className="text-[10px] text-muted-foreground">{t('discountLabel')}</label>
+                          <label className="text-[10px] text-muted-foreground">Desconto</label>
                           <input
                             type="number"
                             step="0.01"
@@ -864,16 +867,16 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                       <div className="flex justify-between items-center">
                         <div className="space-y-0.5">
                           <span className="text-xs text-muted-foreground">
-                            {t('originalLabel')}: {fc(item.total_price)}
+                            Original: {fc(item.total_price)}
                           </span>
                           {item.discount_amount > 0 && (
                             <span className="text-xs text-green-600 block">
-                              {t('withDiscountLabel')}: {fc(item.discounted_price)}
+                              Com desconto: {fc(item.discounted_price)}
                             </span>
                           )}
                         </div>
                         <Button size="sm" variant="ghost" onClick={() => setEditingItem(null)} className="h-7 text-xs">
-                          <Check className="w-3 h-3 mr-1" /> {t('editItemBtn')}
+                          <Check className="w-3 h-3 mr-1" /> OK
                         </Button>
                       </div>
                     </div>
@@ -916,14 +919,14 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
           {!saved && (
             <Button variant="outline" onClick={addItem} className="w-full h-10">
               <Plus className="w-4 h-4 mr-2" />
-              {t('addItemBtn')}
+              Adicionar Item
             </Button>
           )}
 
           {result.items.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-sm text-muted-foreground">{t('noneFoundMsg')}</p>
-              <p className="text-xs text-muted-foreground mt-1">{t('lightingTip')}</p>
+              <p className="text-sm text-muted-foreground">Nenhum item encontrado no cupom.</p>
+              <p className="text-xs text-muted-foreground mt-1">Tente fotografar com melhor iluminação.</p>
             </div>
           )}
 
@@ -936,7 +939,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 disabled={result.items.length === 0}
               >
                 <Package className="w-4 h-4 mr-2" />
-                {t('saveToStock')}
+                Salvar no Estoque e Histórico
               </Button>
             ) : (
               <motion.div
@@ -945,19 +948,18 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 className="bg-primary/10 rounded-lg p-4 text-center"
               >
                 <Check className="w-8 h-8 text-primary mx-auto mb-2" />
-                <p className="text-sm font-semibold text-primary">{t('saveSuccessful')}</p>
+                <p className="text-sm font-semibold text-primary">Salvo com sucesso!</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {result.items.length} {t('itemsAddedMsg')}
+                  {result.items.length} itens adicionados ao estoque e histórico
                 </p>
               </motion.div>
             )}
             <Button variant="outline" onClick={reset} className="w-full">
-              {t('scanAnotherBtn')}
+              Escanear outro cupom
             </Button>
           </div>
         </div>
       </div>
-
     );
   }
 
@@ -965,8 +967,8 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
   return (
     <div className="pb-20">
       <PageHeader
-        title={mode === 'single' ? t('singlePhoto') : t('multiPhoto')}
-        subtitle={mode === 'single' ? t('takePhotoSub') : `${images.length} ${t('photosAddedSub')}`}
+        title={mode === 'single' ? 'Foto Única' : 'Múltiplas Fotos'}
+        subtitle={mode === 'single' ? 'Tire uma foto do cupom' : `${images.length} foto(s) adicionada(s)`}
         onBack={reset}
       />
 
@@ -989,7 +991,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
           >
             <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm text-destructive font-medium">{t('analysisError')}</p>
+              <p className="text-sm text-destructive font-medium">Erro na análise</p>
               <p className="text-xs text-destructive/80 mt-0.5">{error}</p>
             </div>
             <button onClick={() => setError(null)} className="ml-auto">
@@ -1040,10 +1042,10 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
             </div>
             <div className="text-center">
               <p className="text-sm font-medium text-card-foreground">
-                {images.length === 0 ? t('takeReceiptPhoto') : t('addMorePhotos')}
+                {images.length === 0 ? 'Fotografar Cupom' : 'Adicionar Mais Fotos'}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {t('tapToTakeOrGallery')}
+                Toque para tirar foto ou selecionar da galeria
               </p>
             </div>
           </button>
@@ -1051,14 +1053,14 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
           {mode === 'multi' && (
             <div className="bg-accent/50 rounded-lg p-3 space-y-1.5">
               <p className="text-xs font-semibold text-accent-foreground">
-                {t('multiPhotoTipTitle')}
+                📸 Dica para cupons longos:
               </p>
               <p className="text-xs text-accent-foreground/80">
-                {t('multiPhotoTipDesc')}
+                Ao fotografar, garanta que o <span className="font-bold">último item visível</span> de uma foto apareça também no <span className="font-bold">início da próxima foto</span>. Essa sobreposição permite que a IA identifique a junção e evite duplicar itens.
               </p>
               {images.length > 1 && (
                 <p className="text-[10px] text-primary font-medium mt-1">
-                  ✅ {images.length} {t('imagesAddedMsg')}
+                  ✅ {images.length} fotos adicionadas — a IA vai identificar as sobreposições automaticamente.
                 </p>
               )}
             </div>
@@ -1073,7 +1075,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
               className="w-full gradient-primary text-primary-foreground border-0 h-11"
             >
               <Check className="w-4 h-4 mr-2" />
-              {t('processMultiWithAI')} ({images.length})
+              Processar {images.length} foto(s) com IA
             </Button>
           </div>
         )}
