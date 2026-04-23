@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { ShoppingList, ShoppingListItem, StockItem } from '@/types';
 import { ListDetailPage } from './ListDetailPage';
 import { toast } from 'sonner';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 type Filter = 'active' | 'completed' | 'archived';
 
@@ -18,7 +17,6 @@ interface ListsPageProps {
 }
 
 export function ListsPage({ onBack }: ListsPageProps) {
-  const { t } = useLanguage();
   const [filter, setFilter] = useState<Filter>('active');
   const [showNewList, setShowNewList] = useState(false);
   const [newName, setNewName] = useState('');
@@ -41,8 +39,8 @@ export function ListsPage({ onBack }: ListsPageProps) {
     return l.status === 'archived';
   }).sort((a, b) => {
     // "Lembrete de Compras" always on top
-    if (a.name === REMINDER_LIST_NAME_CONST || a.name === t('reminderListName')) return -1;
-    if (b.name === REMINDER_LIST_NAME_CONST || b.name === t('reminderListName')) return 1;
+    if (a.name === REMINDER_LIST_NAME_CONST) return -1;
+    if (b.name === REMINDER_LIST_NAME_CONST) return 1;
     return 0;
   });
 
@@ -109,15 +107,15 @@ export function ListsPage({ onBack }: ListsPageProps) {
     if (direction === 'left') {
       // Delete
       setLists(prev => prev.filter(l => l.id !== listId));
-      toast.success(t('listDeletedToast'));
+      toast.success('Lista excluída.');
     } else {
       // Right: archive or unarchive
       if (list.status === 'archived') {
         setLists(prev => prev.map(l => l.id === listId ? { ...l, status: 'active' as const } : l));
-        toast.success(t('listRestoredToast'));
+        toast.success('Lista restaurada.');
       } else {
         setLists(prev => prev.map(l => l.id === listId ? { ...l, status: 'archived' as const } : l));
-        toast.success(t('listArchivedToast'));
+        toast.success('Lista arquivada.');
       }
     }
   };
@@ -134,16 +132,16 @@ export function ListsPage({ onBack }: ListsPageProps) {
   }
 
   const filters: { id: Filter; label: string; icon?: typeof ShoppingCart }[] = [
-    { id: 'active', label: t('active'), icon: ShoppingCart },
-    { id: 'completed', label: t('completed'), icon: CheckCircle2 },
-    { id: 'archived', label: t('archived'), icon: Archive },
+    { id: 'active', label: 'Ativas', icon: ShoppingCart },
+    { id: 'completed', label: 'Concluídas', icon: CheckCircle2 },
+    { id: 'archived', label: 'Arquivo', icon: Archive },
   ];
 
   return (
     <div className="pb-20">
       <PageHeader
-        title={t('listsTitle')}
-        subtitle={t('organizeShopping')}
+        title="Listas de Compras"
+        subtitle="Organize suas compras"
         onBack={onBack}
         action={
           <button onClick={() => setShowNewList(true)} className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
@@ -176,7 +174,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
 
         {/* Swipe hint */}
         <p className="text-[10px] text-muted-foreground text-center">
-          {t('swipeHint')}
+          ← Deslize para excluir · Deslize para arquivar →
         </p>
 
         {/* New List Form */}
@@ -192,17 +190,17 @@ export function ListsPage({ onBack }: ListsPageProps) {
                 <input
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
-                  placeholder={t('listNamePlaceholder')}
+                  placeholder="Nome da lista..."
                   className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-primary/30"
                   autoFocus
                   onKeyDown={e => e.key === 'Enter' && createList()}
                 />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={createList} className="gradient-primary text-primary-foreground border-0">
-                    {t('createListBtn')}
+                    Criar Lista
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setShowNewList(false)}>
-                    {t('cancel')}
+                    Cancelar
                   </Button>
                 </div>
               </div>
@@ -219,12 +217,10 @@ export function ListsPage({ onBack }: ListsPageProps) {
               index={i}
               onSelect={() => setSelectedListId(l.id)}
               onSwipe={(dir) => handleSwipe(l.id, dir)}
-              shoppingLabel={t('inShopping')}
-              itemsLabel={t('stockItemsCount')}
             />
           ))}
           {filtered.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-8">{t('noListsFound')}</p>
+            <p className="text-center text-sm text-muted-foreground py-8">Nenhuma lista encontrada</p>
           )}
         </motion.div>
       </div>
@@ -237,15 +233,11 @@ function SwipeableListCard({
   index,
   onSelect,
   onSwipe,
-  shoppingLabel,
-  itemsLabel,
 }: {
   list: ShoppingList;
   index: number;
   onSelect: () => void;
   onSwipe: (dir: 'left' | 'right') => void;
-  shoppingLabel: string;
-  itemsLabel: string;
 }) {
   const [dragX, setDragX] = useState(0);
   const threshold = 100;
@@ -295,8 +287,8 @@ function SwipeableListCard({
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-foreground">{list.name}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {list.status === 'shopping' ? `🛒 ${shoppingLabel} · ` : ''}
-              {list.checked_items}/{list.total_items} {itemsLabel}
+              {list.status === 'shopping' ? '🛒 Em compras · ' : ''}
+              {list.checked_items}/{list.total_items} itens
             </p>
           </div>
         </div>

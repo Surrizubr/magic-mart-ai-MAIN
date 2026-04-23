@@ -37,7 +37,7 @@ interface HistoryPageProps {
 }
 
 export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterStore }: HistoryPageProps) {
-  const { lang, currency, formatCurrency: fc, t } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const [historyData, setHistoryData] = useState(() => {
     const allHistory = getHistory();
     return filterDate
@@ -112,7 +112,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
 
   const handleAddToList = (item: any) => {
     const lists = getLists();
-    let reminderList = lists.find(l => l.name === t('reminderListName') || l.name === 'Lembrete de Compras');
+    let reminderList = lists.find(l => l.name === 'Lembrete de Compras');
 
     const newItem = {
       id: crypto.randomUUID(),
@@ -136,7 +136,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
       newItem.list_id = newListId;
       reminderList = {
         id: newListId,
-        name: t('reminderListName'),
+        name: 'Lembrete de Compras',
         status: 'active',
         total_items: 1,
         checked_items: 0,
@@ -149,46 +149,50 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     }
 
     saveLists([...lists]);
-    toast.success(`"${item.product_name}" ${t('addedToReminders')}`);
+    toast.success(`"${item.product_name}" adicionado à lista Lembrete de Compras`);
   };
 
   const formatDate = (dateStr: string) => {
     try {
+      // If it's already YYYY-MM-DD, append T12:00 for local time stability
       const baseDate = dateStr.includes('T') ? dateStr : `${dateStr}T12:00`;
       const date = new Date(baseDate);
-      if (isNaN(date.getTime())) return t('invalidDate');
-      return date.toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { day: '2-digit', month: 'long' });
+      if (isNaN(date.getTime())) return 'Data Inválida';
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
     } catch {
-      return t('invalidDate');
+      return 'Data Inválida';
     }
   };
 
   return (
     <div className="pb-20">
       <PageHeader
-        title={t('history')}
+        title="Histórico"
         subtitle={filterDate
           ? `${filterStore || ''} — ${formatDate(filterDate)}`
-          : t('historySubtitle')
+          : "Suas compras anteriores"
         }
         onBack={onBack}
+        action={
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary text-primary text-xs font-medium">
+            <Clock className="w-3.5 h-3.5" /> Abr 2026
+          </button>
+        }
       />
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4 space-y-4">
         {/* Scanner button */}
         {onNavigateToScanner && (
           <Button onClick={onNavigateToScanner} className="w-full gradient-primary text-primary-foreground border-0 h-10">
-            <ScanLine className="w-4 h-4 mr-2" /> {t('scanReceiptBtn')}
+            <ScanLine className="w-4 h-4 mr-2" /> Scanner Cupom
           </Button>
         )}
 
         {/* Total */}
         <div className="bg-accent/50 rounded-xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-primary">{t('monthTotal')}</p>
-            <p className="text-xs text-muted-foreground capitalize">
-              {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'long', year: 'numeric' })}
-            </p>
+            <p className="text-xs font-semibold text-primary">Total do mês</p>
+            <p className="text-xs text-muted-foreground">Abril De 2026</p>
           </div>
           <p className="text-2xl font-bold text-primary">{fc(totalMonth)}</p>
         </div>
@@ -212,7 +216,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
               const showMonthDivider = currentMonth !== lastMonth;
               lastMonth = currentMonth;
 
-              const monthLabel = new Date(`${currentMonth}-01T12:00`).toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'long', year: 'numeric' });
+              const monthLabel = new Date(`${currentMonth}-01T12:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
               return (
                 <div key={key} className="relative">
@@ -253,7 +257,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                             onClick={() => handleEditAddress(store, date)}
                             className="text-[10px] text-muted-foreground flex items-center gap-0.5 ml-2 hover:text-primary transition-colors"
                           >
-                            {t('editBtn')} <Pencil className="w-2.5 h-2.5" />
+                            Editar <Pencil className="w-2.5 h-2.5" />
                           </button>
                         </div>
                       </div>
@@ -267,7 +271,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                       >
                         <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                         <span className="text-[11px] text-amber-800">
-                          {t('scanReceiptMsg')}
+                          Escaneie o cupom fiscal desta compra para completar informações faltantes
                         </span>
                         <ScanLine className="w-4 h-4 text-amber-600 shrink-0 ml-auto" />
                       </button>
@@ -293,7 +297,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                                 <p className="text-sm font-medium text-foreground">{item.product_name}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
-                                    {catIcon} {t(item.category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ''))}
+                                    {catIcon} {item.category}
                                   </span>
                                   <span className="text-xs text-muted-foreground">{item.quantity} un</span>
                                 </div>
@@ -315,10 +319,10 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
       <Dialog open={!!editingStore} onOpenChange={(open) => !open && setEditingStore(null)}>
         <DialogContent className="max-w-[90vw] rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-base">{t('editAddressTitle')}</DialogTitle>
+            <DialogTitle className="text-base">Editar Endereço</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <label className="text-xs font-medium text-foreground">{t('locationLabel')}</label>
+            <label className="text-xs font-medium text-foreground">Local</label>
             <div className="flex gap-2">
               <Input
                 value={editAddress}
@@ -337,9 +341,9 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
               </Button>
             </div>
             {geoLoading && (
-              <p className="text-xs text-muted-foreground">{t('gettingLocation')}</p>
+              <p className="text-xs text-muted-foreground">Obtendo localização...</p>
             )}
-            <label className="text-xs font-medium text-foreground">{t('purchaseDateLabel')}</label>
+            <label className="text-xs font-medium text-foreground">Data da compra</label>
             <Input
               type="date"
               value={editDate}
@@ -348,8 +352,8 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingStore(null)}>{t('cancelBtn')}</Button>
-            <Button onClick={handleSaveAddress}>{t('save')}</Button>
+            <Button variant="outline" onClick={() => setEditingStore(null)}>Cancelar</Button>
+            <Button onClick={handleSaveAddress}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

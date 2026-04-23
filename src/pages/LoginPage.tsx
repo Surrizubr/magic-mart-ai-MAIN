@@ -37,7 +37,7 @@ export function LoginPage() {
         );
 
         if (!popup) {
-          toast.error(t('popupBlockedError'));
+          toast.error('O bloqueador de popups impediu o login. Por favor, autorize popups.');
           return;
         }
 
@@ -49,7 +49,7 @@ export function LoginPage() {
               console.log('[Login] Popup closed, checking session...');
               const { data: sessionData } = await supabase.auth.getSession();
               if (sessionData.session) {
-                toast.success(t('loginSuccessToast'));
+                toast.success('Login realizado com sucesso!');
                 // O useAuth detectará a mudança de estado automaticamente
               }
             }
@@ -60,7 +60,7 @@ export function LoginPage() {
       }
     } catch (err: any) {
       console.error('[Login] Error:', err);
-      toast.error(err.message || t('loginError'));
+      toast.error(err.message || 'Erro ao iniciar login');
     }
   };
 
@@ -76,7 +76,7 @@ export function LoginPage() {
             <span className="text-3xl">🌿</span>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Magicmart AI</h1>
-          <p className="text-sm text-muted-foreground">{t('appTagline')}</p>
+          <p className="text-sm text-muted-foreground">{t('appTagline') || 'Sua despensa inteligente'}</p>
         </div>
 
         <button
@@ -93,13 +93,13 @@ export function LoginPage() {
         </button>
 
         <p className="text-center text-[10px] text-muted-foreground/70 mt-4">
-          {t('termsDisclaimer')}{' '}
+          Ao continuar, você concorda com nossos{' '}
           <a href="https://www.idapps.com.br/terms" target="_blank" rel="noopener noreferrer" className="underline">
-            {t('termsOfUse')}
+            Termos de Uso
           </a>{' '}
-          {t('and')}{' '}
+          e{' '}
           <a href="https://www.idapps.com.br/privacy" target="_blank" rel="noopener noreferrer" className="underline">
-            {t('privacyPolicy')}
+            Política de Privacidade
           </a>
         </p>
       </motion.div>

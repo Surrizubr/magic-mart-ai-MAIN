@@ -35,14 +35,10 @@ interface SavingsPageProps {
 }
 
 export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
-  const { lang, currency, formatCurrency: fc, t } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const allHistory = getHistory();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedWeekDay, setSelectedWeekDay] = useState<number | null>(null);
-
-  const localWeekDays = [
-    t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat'), t('sun')
-  ];
 
   // Use all history — no date filtering, so every purchase appears
   const weekHistory = allHistory;
@@ -147,16 +143,16 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
       ? getWeekDayStores(selectedWeekDay)
       : [];
   const popupTitle = selectedDay !== null
-    ? `${t('day')} ${selectedDay}`
+    ? `Dia ${selectedDay}`
     : selectedWeekDay !== null
-      ? localWeekDays[selectedWeekDay]
+      ? weekDays[selectedWeekDay]
       : '';
 
   return (
     <div className="pb-20">
       <PageHeader
-        title={t('cheapestDaysTitle')}
-        subtitle={t('priceAnalysisByDay')}
+        title="Dias Mais Baratos"
+        subtitle="Análise de preços por dia"
         onBack={onBack}
       />
 
@@ -172,16 +168,16 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
               <span className="text-lg">🐷</span>
             </div>
             <div>
-              <p className="text-xs font-bold text-primary uppercase tracking-wider">{t('potentialSavings')}</p>
+              <p className="text-xs font-bold text-primary uppercase tracking-wider">Economia Potencial</p>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-bold text-foreground">{currency}</span>
-                <span className="text-sm text-muted-foreground">{t('moreDataWarning')}</span>
+                <span className="text-sm text-muted-foreground">Necessário mais dados históricos</span>
               </div>
             </div>
           </div>
           <div className="mt-3 flex items-start gap-1.5 text-xs text-primary">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <p>{t('savingsDisclaimer')}</p>
+            <p>Valor estimado. A economia real depende de disponibilidade, localização e variações de preço entre lojas.</p>
           </div>
         </div>
 
@@ -189,33 +185,33 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-primary/80" />
-            <span className="text-xs text-muted-foreground">{t('legendVeryCheap')}</span>
+            <span className="text-xs text-muted-foreground">Muito barato</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-primary/40" />
-            <span className="text-xs text-muted-foreground">{t('legendCheap')}</span>
+            <span className="text-xs text-muted-foreground">Barato</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-warning" />
-            <span className="text-xs text-muted-foreground">{t('legendNormal')}</span>
+            <span className="text-xs text-muted-foreground">Normal</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-destructive/40" />
-            <span className="text-xs text-muted-foreground">{t('legendExpensive')}</span>
+            <span className="text-xs text-muted-foreground">Caro</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-destructive/60" />
-            <span className="text-xs text-muted-foreground">{t('legendVeryExpensive')}</span>
+            <span className="text-xs text-muted-foreground">Muito caro</span>
           </div>
         </div>
 
         {/* Weekly Heatmap */}
         <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="text-sm font-bold text-foreground mb-3">{t('weekDaysHeatmap')}</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">Dias da Semana</h3>
           <div className="grid grid-cols-7 gap-2">
-            {localWeekDays.map((day, i) => (
+            {weekDays.map((day, i) => (
               <button
-                key={i}
+                key={day}
                 onClick={() => handleWeekDayClick(i)}
                 disabled={weekData[i] === 0}
                 className="flex flex-col items-center gap-1.5 group"
@@ -229,13 +225,13 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           </div>
           <div className="flex items-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
             <Info className="w-3 h-3" />
-            <span>{t('lastWeeksCount')} · {t('tapToSeeStores')}</span>
+            <span>Últimas 4 semanas · Toque para ver os locais</span>
           </div>
         </div>
 
         {/* Monthly Heatmap */}
         <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="text-sm font-bold text-foreground mb-3">{t('monthDaysHeatmap')}</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">Dias do Mês</h3>
           <div className="grid grid-cols-7 gap-2">
             {monthData.map((d, i) => (
               <button
@@ -253,7 +249,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           </div>
           <div className="flex items-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
             <Info className="w-3 h-3" />
-            <span>{t('lastMonthsCount')} · {t('tapToSeeStores')}</span>
+            <span>Últimos 3 meses · Toque para ver os locais</span>
           </div>
         </div>
       </motion.div>
@@ -281,7 +277,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                   <div>
                     <p className="text-sm font-bold text-foreground">{popupTitle}</p>
                     <p className="text-xs text-muted-foreground">
-                      {popupStores.length} {popupStores.length === 1 ? t('locationVisited') : t('locationsVisited')}
+                      {popupStores.length} local(is) visitado(s)
                     </p>
                   </div>
                   <button
@@ -305,7 +301,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{store}</p>
                         <p className="text-xs text-muted-foreground">
-                          {info.count} {info.count === 1 ? t('item') : t('stockItemsCount')} · {fc(info.total)}
+                          {info.count} {info.count === 1 ? 'item' : 'itens'} · {fc(info.total)}
                         </p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />

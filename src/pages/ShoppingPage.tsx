@@ -38,7 +38,6 @@ interface InstructionsBannerProps {
 }
 
 function InstructionsBanner({ item2Text }: InstructionsBannerProps) {
-  const { t } = useLanguage();
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -47,16 +46,16 @@ function InstructionsBanner({ item2Text }: InstructionsBannerProps) {
     >
       <div className="flex items-center gap-2 mb-3">
         <Info className="w-5 h-5 text-primary" />
-        <h3 className="text-sm font-bold text-foreground">{t('howItWorks')}</h3>
+        <h3 className="text-sm font-bold text-foreground">Como funciona?</h3>
       </div>
       
       <div className="space-y-3">
         <ul className="space-y-2">
           {[
-            t('shoppingStep1'),
+            "Adicione os itens comprados um a um;",
             item2Text,
-            t('shoppingStep3'),
-            t('shoppingStep4')
+            "Ao encerrar as compras, os itens vão direto para o estoque;",
+            "Após concluir sua compra, vá em histórico e escaneie o cupom para atualizar os preços."
           ].map((text, idx) => (
             <li key={idx} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
               <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px]">
@@ -71,7 +70,7 @@ function InstructionsBanner({ item2Text }: InstructionsBannerProps) {
           <div className="flex gap-2">
             <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
             <p className="text-[11px] text-muted-foreground leading-snug">
-              <span className="font-bold text-foreground">{t('tipLabel')}</span> {t('shoppingTip')}
+              <span className="font-bold text-foreground">Dica:</span> Ao invés de adicionar itens um a um, prefira usar somente o escâner de cupom logo após as compras. É mais rápido e automático.
             </p>
           </div>
         </div>
@@ -81,7 +80,7 @@ function InstructionsBanner({ item2Text }: InstructionsBannerProps) {
 }
 
 export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
-  const { lang, t, currency, formatCurrency: fc } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const [mode, setMode] = useState<ShoppingMode>(null);
   const [storeName, setStoreName] = useState('');
   const [storeSet, setStoreSet] = useState(false);
@@ -113,7 +112,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
-            { headers: { 'Accept-Language': lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es' : 'en' } }
+            { headers: { 'Accept-Language': 'pt-BR' } }
           );
           const data = await res.json();
           const addr = data.address || {};
@@ -127,17 +126,17 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
           if (!name.trim()) name = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
           setStoreName(name.trim());
           setStoreSet(true);
-          toast.success(t('locationObtained'));
+          toast.success('Localização obtida!');
         } catch {
           setStoreName(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
           setStoreSet(true);
-          toast.info(t('coordsSaved'));
+          toast.info('Coordenadas salvas.');
         }
         setGeoLoading(false);
       },
       () => {
         setGeoLoading(false);
-        toast.error(t('locationError'));
+        toast.error('Não foi possível obter localização');
       },
       { enableHighAccuracy: true }
     );
@@ -145,7 +144,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
 
   const confirmStore = () => {
     if (!storeName.trim()) {
-      toast.error(t('informShoppingLocation'));
+      toast.error('Informe o local de compras');
       return;
     }
     setStoreSet(true);
@@ -180,7 +179,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
 
   const finishShopping = async () => {
     if (items.length === 0) {
-      toast.error(t('noItemAdded'));
+      toast.error('Nenhum item adicionado');
       return;
     }
     
@@ -237,7 +236,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     await saveStock(updatedStockWithRates);
     await saveHistory(newHistory);
 
-    toast.success(`${items.length} ${t('itemsAddedToStock')}`);
+    toast.success(`${items.length} itens adicionados ao estoque`);
     onNavigate('home');
   };
 
@@ -263,7 +262,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       setCameraStep('scanning');
     } catch (err: any) {
       console.error('Camera Access Error:', err);
-      toast.error(t('cameraAccessError') + ' ' + (err.message || 'Permissão negada'));
+      toast.error('Não foi possível acessar a câmera: ' + (err.message || 'Permissão negada'));
     }
   };
 
@@ -358,12 +357,12 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
         setIsProcessing(false);
         setProcessingThumbnail(null);
         setProgress(0);
-        toast.success(`${t('productRecognized')} ${product_name}`);
+        toast.success(`Produto reconhecido: ${product_name}`);
       }, 500);
     } catch (err: any) {
       console.error('AI Recognition Error:', err);
       if (!err.message?.includes('aborted')) {
-        toast.error(err.message || t('recognitionError'));
+        toast.error(err.message || 'Erro ao reconhecer produto.');
       }
       setIsProcessing(false);
       setProcessingThumbnail(null);
@@ -377,7 +376,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     setProcessingThumbnail(null);
     setProgress(0);
     if (intervalRef.current) clearInterval(intervalRef.current);
-    toast.info(t('recognitionCanceled'));
+    toast.info('Reconhecimento cancelado');
   };
 
   // Mode selection screen
@@ -385,8 +384,8 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     return (
       <div className="pb-20">
         <PageHeader
-          title={t('goShoppingTitle')}
-          subtitle={t('chooseShoppingMode')}
+          title="Fazer Mercado"
+          subtitle="Escolha como registrar suas compras"
           onBack={onBack}
         />
         <div className="px-4 pt-4 space-y-3">
@@ -401,8 +400,8 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
               <ListChecks className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">{t('withList')}</p>
-              <p className="text-xs text-muted-foreground">{t('openActiveLists')}</p>
+              <p className="text-sm font-bold text-foreground">Com Lista</p>
+              <p className="text-xs text-muted-foreground">Abrir listas ativas para fazer compras</p>
             </div>
           </motion.button>
 
@@ -417,8 +416,8 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
               <Camera className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">{t('register')}</p>
-              <p className="text-xs text-muted-foreground">{t('useCameraToRecognize')}</p>
+              <p className="text-sm font-bold text-foreground">Registrar</p>
+              <p className="text-xs text-muted-foreground">Usar câmera para reconhecer produtos</p>
             </div>
           </motion.button>
 
@@ -433,12 +432,12 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
               <Search className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">{t('byCategory')}</p>
-              <p className="text-xs text-muted-foreground">{t('searchByCategory')}</p>
+              <p className="text-sm font-bold text-foreground">Por Categoria</p>
+              <p className="text-xs text-muted-foreground">Buscar produto por categoria</p>
             </div>
           </motion.button>
 
-          <InstructionsBanner item2Text={t('shoppingStep2List')} />
+          <InstructionsBanner item2Text="Insira os itens usando uma lista ativa, ou por reconhecimento de imagem, ou manualmente;" />
         </div>
       </div>
     );
@@ -449,29 +448,29 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
     return (
       <div className="pb-20">
         <PageHeader
-          title={mode === 'register' ? t('registerPurchase') : t('purchaseByCategory')}
-          subtitle={t('informShoppingLocation')}
+          title={mode === 'register' ? 'Registrar Compra' : 'Compra por Categoria'}
+          subtitle="Informe o local de compras"
           onBack={() => setMode(null)}
         />
         <div className="px-4 pt-6 space-y-4">
           <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-            <label className="text-sm font-medium text-foreground">{t('marketName')}</label>
+            <label className="text-sm font-medium text-foreground">Nome do mercado</label>
             <input
               type="text"
               value={storeName}
               onChange={(e) => setStoreName(e.target.value)}
-              placeholder={t('marketNamePlaceholder')}
+              placeholder="Ex: Supermercado Extra"
               className="w-full p-3 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t('or')}</span>
+              <span className="text-xs text-muted-foreground">ou</span>
               <button
                 onClick={handleGeoLocation}
                 disabled={geoLoading}
                 className="flex items-center gap-1 px-3 py-2 rounded-lg bg-accent text-primary text-xs font-medium"
               >
                 <MapPin className="w-3.5 h-3.5" />
-                {geoLoading ? t('getting') : t('useLocation')}
+                {geoLoading ? 'Obtendo...' : 'Usar localização'}
               </button>
             </div>
           </div>
@@ -479,13 +478,13 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
             onClick={confirmStore}
             className="w-full p-3 rounded-xl gradient-primary text-primary-foreground text-sm font-bold"
           >
-            {t('continueBtn')}
+            Continuar
           </button>
           
           <InstructionsBanner 
             item2Text={mode === 'register' ? 
-              t('shoppingStep2Register') : 
-              t('shoppingStep2Category')
+              "Tire a foto do rótulo do produto que quer adicionar;" : 
+              "Adicione produtos manualmente a partir da lista de categorias;"
             } 
           />
         </div>
@@ -514,9 +513,9 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
                     playsInline
                     className="w-full h-full object-cover"
                   />
-                      <div className="absolute top-6 left-0 right-0 flex justify-center">
+                  <div className="absolute top-6 left-0 right-0 flex justify-center">
                     <div className="bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-                      <p className="text-white text-sm font-medium">{t('pointAtProduct')}</p>
+                      <p className="text-white text-sm font-medium">Aponte para o produto</p>
                     </div>
                   </div>
                 </>
@@ -545,13 +544,13 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
                   <div className="w-full max-w-xs space-y-4 text-center">
                     <div className="space-y-2">
                       <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-primary/70">
-                        <span>{t('analyzingProduct')}</span>
+                        <span>Analisando Produto</span>
                         <span>{progress}%</span>
                       </div>
                       <Progress value={progress} className="h-2 bg-white/5" />
                     </div>
-                    <p className="text-white font-medium animate-pulse">{t('aiIdentifyingItem')}</p>
-                    <p className="text-white/40 text-[10px] uppercase tracking-tighter">{t('secondsWarning')}</p>
+                    <p className="text-white font-medium animate-pulse">A Inteligência Artificial está identificando o item...</p>
+                    <p className="text-white/40 text-[10px] uppercase tracking-tighter">Isso pode levar alguns segundos</p>
                   </div>
                 </div>
               )}
@@ -567,7 +566,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
                       className="flex-1 text-white hover:bg-white/10"
                       onClick={stopCamera}
                     >
-                      {t('cancel')}
+                      Cancelar
                     </Button>
                     <button
                       onClick={captureImage}
@@ -585,14 +584,14 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
                       onClick={() => setCameraStep('scanning')}
                     >
                       <RotateCcw className="w-4 h-4 mr-2" />
-                      {t('reject')}
+                      Recusar
                     </Button>
                     <Button
                       className="flex-1 h-12 gradient-primary text-primary-foreground text-sm font-bold"
                       onClick={processAndRecognize}
                     >
                       <Send className="w-4 h-4 mr-2" />
-                      {t('accept')}
+                      Aceitar
                     </Button>
                   </>
                 )}
@@ -603,7 +602,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       </AnimatePresence>
 
       <PageHeader
-        title={t('shoppingInProgress')}
+        title="Compras em andamento"
         subtitle={storeName}
         onBack={() => { setStoreSet(false); setMode(null); }}
       />
@@ -613,7 +612,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
         <div className="bg-card rounded-xl border border-primary/30 p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-foreground">{items.length} {t('stockItemsCount')}</span>
+            <span className="text-sm font-medium text-foreground">{items.length} itens</span>
           </div>
           <span className="text-lg font-bold text-primary">{fc(total)}</span>
         </div>
@@ -622,10 +621,10 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       {/* Action buttons */}
       <div className="px-4 pt-3 flex gap-2">
         <button onClick={finishShopping} className="flex-1 flex items-center justify-center gap-1.5 p-2.5 rounded-xl gradient-primary text-primary-foreground text-xs font-bold">
-          <CheckCircle className="w-4 h-4" /> {t('endShopping')}
+          <CheckCircle className="w-4 h-4" /> Encerrar Compras
         </button>
         <button onClick={cancelShopping} className="flex-1 flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-destructive/30 bg-destructive/5 text-destructive text-xs font-bold">
-          <XCircle className="w-4 h-4" /> {t('cancelShopping')}
+          <XCircle className="w-4 h-4" /> Cancelar Compras
         </button>
       </div>
 
@@ -634,7 +633,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
         <div className="px-4 pt-3 space-y-3">
           <button onClick={startCamera} className="w-full bg-card rounded-xl border border-border p-4 flex items-center justify-center gap-2">
             <Camera className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-foreground">{t('openCamera')}</span>
+            <span className="text-sm font-medium text-foreground">Abrir câmera</span>
           </button>
 
           {isProcessing && (
@@ -651,11 +650,11 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
                 )}
                 <div className="flex-1 space-y-1">
                   <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-primary">
-                    <span>{t('recognizing')}</span>
+                    <span>Reconhecendo...</span>
                     <span>{progress}%</span>
                   </div>
                   <Progress value={progress} className="h-1.5" />
-                  <p className="text-[10px] text-muted-foreground animate-pulse">{t('aiIdentifyingItem')}</p>
+                  <p className="text-[10px] text-muted-foreground animate-pulse">A IA está identificando o item...</p>
                 </div>
                 <button 
                   onClick={cancelProcessing}
@@ -681,7 +680,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
                   selectedCategory === cat ? 'gradient-primary text-primary-foreground' : 'bg-card border border-border text-foreground'
                 }`}
               >
-                {t(cat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ''))}
+                {cat}
               </button>
             ))}
           </div>
@@ -696,7 +695,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
             className="w-full bg-card rounded-xl border border-dashed border-primary/40 p-3 flex items-center justify-center gap-2 text-primary"
           >
             <Plus className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('addItemBtn')}</span>
+            <span className="text-sm font-medium">Adicionar item</span>
           </button>
         ) : (
           <motion.div
@@ -705,7 +704,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
             className="bg-card rounded-xl border border-border p-4 space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-foreground">{t('newItem')}</span>
+              <span className="text-sm font-bold text-foreground">Novo item</span>
               <button onClick={() => setShowAddForm(false)}>
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -714,7 +713,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder={t('productNamePlaceholder')}
+              placeholder="Nome do produto"
               className="w-full p-2.5 rounded-lg border border-border bg-background text-foreground text-sm"
             />
             <div className="flex gap-2">
@@ -749,14 +748,10 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
               onChange={(e) => setNewCategory(e.target.value)}
               className="w-full p-2.5 rounded-lg border border-border bg-background text-foreground text-sm"
             >
-              {categories.map(c => (
-                <option key={c} value={c}>
-                  {t(c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ''))}
-                </option>
-              ))}
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <button onClick={addItem} className="w-full p-2.5 rounded-xl gradient-primary text-primary-foreground text-sm font-bold">
-              {t('add')}
+              Adicionar
             </button>
           </motion.div>
         )}
@@ -776,9 +771,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
             >
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">{item.product_name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t(item.category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ''))} · {fc(item.price)}/{item.unit}
-                </p>
+                <p className="text-xs text-muted-foreground">{item.category} · {fc(item.price)}/{item.unit}</p>
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-full bg-accent flex items-center justify-center">
