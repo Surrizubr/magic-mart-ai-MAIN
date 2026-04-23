@@ -343,44 +343,6 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
           onBack={onBack}
         />
         <div className="px-4 pt-4 space-y-3">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mb-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Info className="w-5 h-5 text-primary" />
-              <h3 className="text-sm font-bold text-foreground">Como funciona?</h3>
-            </div>
-            
-            <div className="space-y-3">
-              <ul className="space-y-2">
-                {[
-                  "Adicione os itens comprados um a um;",
-                  "Insira os itens usando uma lista ativa, ou por reconhecimento de imagem, ou manualmente;",
-                  "Ao encerrar as compras, os itens vão direto para o estoque;",
-                  "Após concluir sua compra, vá em histórico e escaneie o cupom para atualizar os preços."
-                ].map((text, idx) => (
-                  <li key={idx} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
-                    <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px]">
-                      {idx + 1}
-                    </span>
-                    {text}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="pt-2 mt-2 border-t border-primary/10">
-                <div className="flex gap-2">
-                  <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-muted-foreground leading-snug">
-                    <span className="font-bold text-foreground">Dica:</span> Ao invés de adicionar itens um a um, prefira usar somente o escâner de cupom logo após as compras. É mais rápido e automático.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -428,6 +390,44 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
               <p className="text-xs text-muted-foreground">Buscar produto por categoria</p>
             </div>
           </motion.button>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mt-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Info className="w-5 h-5 text-primary" />
+              <h3 className="text-sm font-bold text-foreground">Como funciona?</h3>
+            </div>
+            
+            <div className="space-y-3">
+              <ul className="space-y-2">
+                {[
+                  "Adicione os itens comprados um a um;",
+                  "Insira os itens usando uma lista ativa, ou por reconhecimento de imagem, ou manualmente;",
+                  "Ao encerrar as compras, os itens vão direto para o estoque;",
+                  "Após concluir sua compra, vá em histórico e escaneie o cupom para atualizar os preços."
+                ].map((text, idx) => (
+                  <li key={idx} className="flex gap-2 text-xs text-muted-foreground leading-relaxed">
+                    <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px]">
+                      {idx + 1}
+                    </span>
+                    {text}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="pt-2 mt-2 border-t border-primary/10">
+                <div className="flex gap-2">
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    <span className="font-bold text-foreground">Dica:</span> Ao invés de adicionar itens um a um, prefira usar somente o escâner de cupom logo após as compras. É mais rápido e automático.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     );
