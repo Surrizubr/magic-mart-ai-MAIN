@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getHistory, saveHistory, getLists, saveLists } from '@/data/mockData';
-import { MapPin, ScanLine, Clock, Pencil, LocateFixed, AlertTriangle, Trash2, ListPlus } from 'lucide-react';
+import { MapPin, ScanLine, Clock, Pencil, LocateFixed, AlertTriangle, Trash2, ListPlus, TrendingUp, TrendingDown } from 'lucide-react';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -45,6 +45,31 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
       : allHistory;
   });
   const totalMonth = historyData.reduce((sum, h) => sum + h.total_price, 0);
+
+  // Pre-calculate price variations using all history
+  const priceVariations = (() => {
+    const all = getHistory();
+    // Sort all history by date ascending to process in chronological order
+    const sorted = [...all].sort((a, b) => a.purchase_date.localeCompare(b.purchase_date));
+    
+    const variations: Record<string, number> = {};
+    const lastPrices: Record<string, number> = {};
+
+    sorted.forEach(item => {
+      const name = item.product_name.toLowerCase();
+      const currentPrice = item.price;
+      
+      if (lastPrices[name] !== undefined) {
+        const prevPrice = lastPrices[name];
+        if (prevPrice > 0 && Math.abs(currentPrice - prevPrice) > 0.001) {
+          variations[item.id] = ((currentPrice - prevPrice) / prevPrice) * 100;
+        }
+      }
+      lastPrices[name] = currentPrice;
+    });
+    
+    return variations;
+  })();
 
   // State for edit address dialog
   const [editingStore, setEditingStore] = useState<{ store: string; date: string } | null>(null);
@@ -298,7 +323,15 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                                   <span className="text-xs text-muted-foreground">{item.quantity} un</span>
                                 </div>
                               </div>
-                              <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
+                              <div className="text-right">
+                                <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
+                                {priceVariations[item.id] !== undefined && (
+                                  <div className={`flex items-center justify-end gap-0.5 text-[10px] font-bold ${priceVariations[item.id] > 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                                    {priceVariations[item.id] > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                                    {Math.abs(priceVariations[item.id]).toFixed(1)}%
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </SwipeableRow>
                         );
