@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
-import { AlertTriangle, Info, MapPin, X, ChevronRight, TrendingDown, TrendingUp, Store, ArrowDown, ArrowUp } from 'lucide-react';
+import { AlertTriangle, Info, MapPin, X, ChevronRight, TrendingDown, TrendingUp, Store, ArrowDown, ArrowUp, LocateFixed, Calendar } from 'lucide-react';
 import { PurchaseHistory } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -39,6 +39,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
   const allHistory = getHistory();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedWeekDay, setSelectedWeekDay] = useState<number | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<any | null>(null);
 
   // Use all history — no date filtering, so every purchase appears
   const weekHistory = allHistory;
@@ -133,19 +134,22 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
   // Product price variation logic for discounts and increases
   const productVariations = (() => {
     const sorted = [...allHistory].sort((a, b) => a.purchase_date.localeCompare(b.purchase_date));
-    const latestVariations: Record<string, { name: string; variation: number; currentPrice: number; prevPrice: number; currentStore: string; prevStore: string }> = {};
+    const latestVariations: Record<string, { name: string; variation: number; currentPrice: number; prevPrice: number; currentStore: string; prevStore: string; currentDate: string; prevDate: string }> = {};
     const lastPrices: Record<string, number> = {};
     const lastStores: Record<string, string> = {};
+    const lastDates: Record<string, string> = {};
 
     sorted.forEach(item => {
       const name = item.product_name;
       const lowerName = name.toLowerCase();
       const currentPrice = item.price;
       const currentStore = item.store_name;
+      const currentDate = item.purchase_date;
       
       if (lastPrices[lowerName] !== undefined) {
         const prevPrice = lastPrices[lowerName];
         const prevStore = lastStores[lowerName];
+        const prevDate = lastDates[lowerName];
         if (prevPrice > 0 && Math.abs(currentPrice - prevPrice) > 0.001) {
           latestVariations[lowerName] = {
             name: name,
@@ -153,12 +157,15 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
             currentPrice: currentPrice,
             prevPrice: prevPrice,
             currentStore,
-            prevStore
+            prevStore,
+            currentDate,
+            prevDate
           };
         }
       }
       lastPrices[lowerName] = currentPrice;
       lastStores[lowerName] = currentStore;
+      lastDates[lowerName] = currentDate;
     });
 
     const variations = Object.values(latestVariations);
@@ -221,6 +228,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
   const closePopup = () => {
     setSelectedDay(null);
     setSelectedWeekDay(null);
+    setSelectedVariation(null);
   };
 
   // Determine which stores to show in popup
@@ -404,25 +412,30 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           </div>
           <div className="max-h-[350px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
             {productVariations.discounts.map((v) => (
-              <div key={v.name} className="flex items-center justify-between bg-emerald-50/50 rounded-lg p-3 border border-emerald-100">
+              <button 
+                key={v.name} 
+                onClick={() => setSelectedVariation(v)}
+                className="w-full flex items-center justify-between bg-emerald-50/50 hover:bg-emerald-100/50 rounded-lg p-3 border border-emerald-100 transition-colors text-left group"
+              >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground truncate">{v.name}</p>
-                  <div className="space-y-0.5 mt-1">
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <span className="font-medium">De:</span> {fc(v.prevPrice)} <span className="opacity-70">at {v.prevStore}</span>
+                  <p className="text-sm font-bold text-foreground truncate group-hover:text-emerald-700 transition-colors">{v.name}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <p className="text-[10px] text-muted-foreground font-medium">
+                      De: <span className="text-foreground">{fc(v.prevPrice)}</span>
                     </p>
-                    <p className="text-[10px] text-emerald-700 flex items-center gap-1">
-                      <span className="font-bold">Para:</span> {fc(v.currentPrice)} <span className="opacity-70">at {v.currentStore}</span>
+                    <p className="text-[10px] text-emerald-700 font-bold">
+                      Para: <span className="text-emerald-800">{fc(v.currentPrice)}</span>
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-emerald-600 flex items-center justify-end gap-1">
+                <div className="text-right flex flex-col items-end gap-1">
+                  <div className="text-xs font-bold text-emerald-600 flex items-center gap-0.5">
                     <ArrowDown className="w-3 h-3" />
                     {Math.abs(v.variation).toFixed(1)}%
-                  </p>
+                  </div>
+                  <ChevronRight className="w-3 h-3 text-emerald-300 group-hover:text-emerald-500 transition-colors" />
                 </div>
-              </div>
+              </button>
             ))}
             {productVariations.discounts.length === 0 && (
               <p className="text-center text-xs text-muted-foreground py-4">Nenhuma queda de preço detectada recentemente.</p>
@@ -440,25 +453,30 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           </div>
           <div className="max-h-[350px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
             {productVariations.increases.map((v) => (
-              <div key={v.name} className="flex items-center justify-between bg-destructive/5 rounded-lg p-3 border border-destructive/10">
+              <button 
+                key={v.name} 
+                onClick={() => setSelectedVariation(v)}
+                className="w-full flex items-center justify-between bg-destructive/5 hover:bg-destructive/10 rounded-lg p-3 border border-destructive/10 transition-colors text-left group"
+              >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground truncate">{v.name}</p>
-                  <div className="space-y-0.5 mt-1">
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <span className="font-medium">De:</span> {fc(v.prevPrice)} <span className="opacity-70">at {v.prevStore}</span>
+                  <p className="text-sm font-bold text-foreground truncate group-hover:text-destructive transition-colors">{v.name}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <p className="text-[10px] text-muted-foreground font-medium">
+                      De: <span className="text-foreground">{fc(v.prevPrice)}</span>
                     </p>
-                    <p className="text-[10px] text-destructive flex items-center gap-1">
-                      <span className="font-bold">Para:</span> {fc(v.currentPrice)} <span className="opacity-70">at {v.currentStore}</span>
+                    <p className="text-[10px] text-destructive font-bold">
+                      Para: <span className="text-destructive-foreground">{fc(v.currentPrice)}</span>
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-destructive flex items-center justify-end gap-1">
+                <div className="text-right flex flex-col items-end gap-1">
+                  <div className="text-xs font-bold text-destructive flex items-center gap-0.5">
                     <ArrowUp className="w-3 h-3" />
                     {Math.abs(v.variation).toFixed(1)}%
-                  </p>
+                  </div>
+                  <ChevronRight className="w-3 h-3 text-destructive/30 group-hover:text-destructive/50 transition-colors" />
                 </div>
-              </div>
+              </button>
             ))}
             {productVariations.increases.length === 0 && (
               <p className="text-center text-xs text-muted-foreground py-4">Nenhum aumento significativo detectado.</p>
@@ -520,6 +538,111 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                       <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                     </button>
                   ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Product Variation Detailed Popup */}
+      <AnimatePresence>
+        {selectedVariation && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-foreground/40 z-40"
+              onClick={closePopup}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              onClick={closePopup}
+            >
+              <div className="bg-card rounded-2xl border border-border shadow-elevated p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h4 className="text-base font-bold text-foreground">{selectedVariation.name}</h4>
+                    <p className={`text-xs font-bold ${selectedVariation.variation < 0 ? 'text-emerald-600' : 'text-destructive'} flex items-center gap-1`}>
+                      {selectedVariation.variation < 0 ? <ArrowDown className="w-3.5 h-3.5" /> : <ArrowUp className="w-3.5 h-3.5" />}
+                      Variação de {Math.abs(selectedVariation.variation).toFixed(1)}%
+                    </p>
+                  </div>
+                  <button onClick={closePopup} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                    <X className="w-4 h-4 text-secondary-foreground" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Previous Purchase */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                      Compra Anterior
+                    </div>
+                    <div className="bg-secondary/30 rounded-xl p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-foreground">{fc(selectedVariation.prevPrice)}</span>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(selectedVariation.prevDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', weekday: 'short' })}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Store className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span className="text-xs font-medium text-foreground truncate">{selectedVariation.prevStore}</span>
+                        </div>
+                        <button 
+                          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedVariation.prevStore)}`, '_blank')}
+                          className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          <LocateFixed className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Current Purchase */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-wider">
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                      Compra Recente
+                    </div>
+                    <div className={`rounded-xl p-4 space-y-2 ${selectedVariation.variation < 0 ? 'bg-emerald-50 border border-emerald-100' : 'bg-destructive/5 border border-destructive/10'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-lg font-bold ${selectedVariation.variation < 0 ? 'text-emerald-700' : 'text-destructive'}`}>
+                          {fc(selectedVariation.currentPrice)}
+                        </span>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(selectedVariation.currentDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', weekday: 'short' })}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Store className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span className="text-xs font-medium text-foreground truncate">{selectedVariation.currentStore}</span>
+                        </div>
+                        <button 
+                          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedVariation.currentStore)}`, '_blank')}
+                          className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          <LocateFixed className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8">
+                  <Button onClick={closePopup} className="w-full gradient-primary text-primary-foreground border-0">
+                    Fechar Detalhes
+                  </Button>
                 </div>
               </div>
             </motion.div>
