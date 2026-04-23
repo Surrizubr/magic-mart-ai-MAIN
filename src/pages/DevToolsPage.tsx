@@ -87,21 +87,31 @@ export function DevToolsPage({ onBack }: DevToolsPageProps) {
           
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground uppercase">Sua API Key</label>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="AIza..."
-                className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-              <button 
-                onClick={clearApiKey}
-                className="p-2 rounded-lg bg-destructive/10 text-destructive border border-destructive/20"
-                title="Limpar chave"
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="AIza..."
+                  className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+                <button 
+                  onClick={clearApiKey}
+                  className="p-2 rounded-lg bg-destructive/10 text-destructive border border-destructive/20"
+                  title="Limpar chave"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+              <a 
+                href="https://aistudio.google.com/apikey" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-xs text-primary underline underline-offset-2 hover:opacity-80 transition-opacity inline-flex items-center gap-1"
               >
-                <Trash2 className="w-5 h-5" />
-              </button>
+                Obter chave em aistudio.google.com/apikey
+              </a>
             </div>
           </div>
 

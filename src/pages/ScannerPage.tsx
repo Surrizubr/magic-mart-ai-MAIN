@@ -493,9 +493,8 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 Como obter sua chave API gratuita:
               </p>
               <ol className="text-xs text-muted-foreground space-y-1.5 pl-4 list-decimal">
-                <li>Acesse <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" className="font-mono text-primary underline">aistudio.google.com</a></li>
+                <li>Acesse <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="font-mono text-primary underline">https://aistudio.google.com/apikey</a></li>
                 <li>Faça login com sua conta Google</li>
-                <li>No menu lateral, clique em <span className="font-semibold text-foreground">"Get API Key"</span></li>
                 <li>Clique em <span className="font-semibold text-foreground">"Create API Key"</span></li>
                 <li>Copie a chave gerada</li>
                 <li>
