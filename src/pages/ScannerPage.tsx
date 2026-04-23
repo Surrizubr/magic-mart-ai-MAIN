@@ -152,7 +152,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setProgressMsg(t('processingResponse'));
 
       const items: ReceiptItem[] = (resultData.items || []).map((item: any, i: number) => {
-        const product_name = item.product_name || item.name || 'Produto sem nome';
+        const product_name = item.product_name || item.name || t('unnamedProduct');
         const quantity = Number(item.quantity) || 1;
         const unit_price = Number(item.unit_price || item.price || 0);
         const total_price = Number(item.total_price || (quantity * unit_price) || 0);
@@ -191,7 +191,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setProgressMsg(t('completingAnalysis'));
 
       const finalResult: AIReceiptResult = {
-        store_name: resultData.store_name || 'Mercado Desconhecido',
+        store_name: resultData.store_name || t('unknownMarket'),
         store_address: resultData.store_address,
         date: resultData.date || new Date().toISOString().slice(0, 10),
         items,
@@ -539,7 +539,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-card-foreground truncate">{receipt.store_name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {new Date(receipt.date + 'T12:00:00').toLocaleDateString(lang === 'english' ? 'en-US' : lang === 'spanish' ? 'es-ES' : 'pt-BR')}
+                      {new Date(receipt.date + 'T12:00:00').toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR')}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {receipt.items.length} {receipt.items.length === 1 ? t('historyItemCount') : t('historyItemsCount')} — {fc(receipt.total)}
@@ -882,7 +882,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                       <div className="flex-1 space-y-1">
                         <p className="text-sm font-medium text-card-foreground">{item.product_name}</p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="bg-secondary px-1.5 py-0.5 rounded text-[10px] font-medium">{item.category}</span>
+                          <span className="bg-secondary px-1.5 py-0.5 rounded text-[10px] font-medium">
+                            {t(item.category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ''))}
+                          </span>
                           <span>{item.quantity} {item.unit}</span>
                           <span>× {fc(item.unit_price)}</span>
                         </div>

@@ -9,6 +9,7 @@ import { computeDaysLeft, deriveStatus, refreshStockStatuses, syncLastPurchaseDa
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { addToReminderList } from '@/lib/reminderList';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { AddStockItemDialog, AddStockItemResult } from '@/components/AddStockItemDialog';
 import { PurchaseHistory } from '@/types';
 
@@ -190,7 +191,7 @@ export function StockPage({ onBack }: StockPageProps) {
                       </div>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent text-accent-foreground flex items-center gap-1`}>
-                          {emoji} {s.category}
+                          {emoji} {t(s.category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ''))}
                         </span>
                         <span className="text-xs text-muted-foreground">{s.quantity} {s.unit}</span>
                       </div>
