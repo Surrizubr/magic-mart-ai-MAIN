@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
-import { AlertTriangle, Info, MapPin, X, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Info, MapPin, X, ChevronRight, TrendingDown, Store } from 'lucide-react';
 import { PurchaseHistory } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -130,6 +130,49 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
     setSelectedWeekDay(null);
   };
 
+  // Cheapest stores calculation
+  const cheapestStores = (() => {
+    const productPrices: Record<string, { min: number; stores: Record<string, number> }> = {};
+
+    allHistory.forEach(h => {
+      const name = h.product_name.toLowerCase();
+      const price = h.price;
+      const store = h.store_name;
+
+      if (!productPrices[name]) {
+        productPrices[name] = { min: price, stores: {} };
+      }
+      if (price < productPrices[name].min) {
+        productPrices[name].min = price;
+      }
+      productPrices[name].stores[store] = price;
+    });
+
+    const storeStats: Record<string, { totalPaid: number; totalMin: number; itemCount: number }> = {};
+
+    Object.values(productPrices).forEach(p => {
+      Object.entries(p.stores).forEach(([store, price]) => {
+        if (!storeStats[store]) {
+          storeStats[store] = { totalPaid: 0, totalMin: 0, itemCount: 0 };
+        }
+        storeStats[store].totalPaid += price;
+        storeStats[store].totalMin += p.min;
+        storeStats[store].itemCount += 1;
+      });
+    });
+
+    return Object.entries(storeStats)
+      .map(([name, stats]) => ({
+        name,
+        score: stats.totalPaid === 0 ? 0 : stats.totalMin / stats.totalPaid,
+        savingsPercentage: (1 - (stats.totalPaid === 0 ? 0 : stats.totalMin / stats.totalPaid)) * 100,
+        itemCount: stats.itemCount,
+        latestDate: allHistory.find(h => h.store_name === name)?.purchase_date || ''
+      }))
+      .filter(s => s.itemCount > 0)
+      .sort((a, b) => b.score - a.score);
+  })();
+
   const closePopup = () => {
     setSelectedDay(null);
     setSelectedWeekDay(null);
@@ -250,6 +293,57 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           <div className="flex items-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
             <Info className="w-3 h-3" />
             <span>Últimos 3 meses · Toque para ver os locais</span>
+          </div>
+        </div>
+
+        {/* Cheapest Stores List */}
+        <div className="bg-card rounded-xl border border-border p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <TrendingDown className="w-4 h-4 text-primary" />
+              Melhores Locais para Comprar
+            </h3>
+            <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">Ranking</span>
+          </div>
+          
+          <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+            {cheapestStores.map((store, idx) => (
+              <button
+                key={store.name}
+                onClick={() => handleStoreClick(store.name, store.latestDate)}
+                className="w-full flex items-center gap-3 bg-secondary/30 hover:bg-secondary/50 rounded-xl p-3 transition-colors text-left group"
+              >
+                <div className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center shrink-0 relative">
+                  <Store className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full gradient-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center border-2 border-card">
+                    {idx + 1}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{store.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {store.itemCount} produtos monitorados
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-primary">
+                    {store.score >= 0.99 ? 'Preço Base' : `${(store.score * 100).toFixed(1)}%`}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">Índice Economia</p>
+                </div>
+              </button>
+            ))}
+            {cheapestStores.length === 0 && (
+              <p className="text-center text-xs text-muted-foreground py-8">
+                Histórico insuficiente para calcular economia por local.
+              </p>
+            )}
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+              * O Índice de Economia compara os preços pagos em cada local com o menor preço já registrado para os mesmos produtos. 100% indica que o local oferece consistentemente os melhores preços.
+            </p>
           </div>
         </div>
       </motion.div>

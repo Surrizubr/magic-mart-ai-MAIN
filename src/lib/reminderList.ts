@@ -1,10 +1,11 @@
 import { ShoppingList, StockItem } from '@/types';
 import { toast } from 'sonner';
+import { getLists, saveLists } from '@/data/mockData';
 
 const REMINDER_LIST_NAME = 'Lembrete de Compras';
 
-export function getOrCreateReminderList(): ShoppingList {
-  const lists: ShoppingList[] = JSON.parse(localStorage.getItem('shopping_lists') || '[]');
+export async function getOrCreateReminderList(): Promise<ShoppingList> {
+  const lists = getLists();
   let reminder = lists.find(l => l.name === REMINDER_LIST_NAME && l.status !== 'archived');
   if (!reminder) {
     reminder = {
@@ -18,14 +19,14 @@ export function getOrCreateReminderList(): ShoppingList {
       created_at: new Date().toISOString().slice(0, 10),
       items: [],
     };
-    lists.unshift(reminder);
-    localStorage.setItem('shopping_lists', JSON.stringify(lists));
+    const updatedLists = [reminder, ...lists];
+    await saveLists(updatedLists);
   }
   return reminder;
 }
 
-export function addToReminderList(product: { product_name: string; category: string; unit: string; last_price?: number; quantity?: number }) {
-  const lists: ShoppingList[] = JSON.parse(localStorage.getItem('shopping_lists') || '[]');
+export async function addToReminderList(product: { product_name: string; category: string; unit: string; last_price?: number; quantity?: number }) {
+  const lists = [...getLists()];
   let reminder = lists.find(l => l.name === REMINDER_LIST_NAME && l.status !== 'archived');
   
   if (!reminder) {
@@ -41,11 +42,20 @@ export function addToReminderList(product: { product_name: string; category: str
       items: [],
     };
     lists.unshift(reminder);
+  } else {
+    // Deep copy to avoid mutating the original object before saving
+    reminder = { ...reminder, items: [...reminder.items] };
+    const idx = lists.findIndex(l => l.id === reminder!.id);
+    lists[idx] = reminder;
   }
 
   const existing = reminder.items.find(i => i.product_name.toLowerCase() === product.product_name.toLowerCase());
   if (existing) {
-    existing.quantity += (product.quantity || 1);
+    const existingIdx = reminder.items.findIndex(i => i.id === existing.id);
+    reminder.items[existingIdx] = { 
+      ...existing, 
+      quantity: existing.quantity + (product.quantity || 1) 
+    };
   } else {
     reminder.items.push({
       id: `item_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -68,12 +78,11 @@ export function addToReminderList(product: { product_name: string; category: str
   if (idx > 0) {
     lists.splice(idx, 1);
     lists.unshift(reminder);
-  } else if (idx === -1) {
-    lists.unshift(reminder);
   }
 
-  localStorage.setItem('shopping_lists', JSON.stringify(lists));
+  await saveLists(lists);
   toast.success(`${product.product_name} adicionado à lista Lembrete de Compras`);
 }
 
 export const REMINDER_LIST_NAME_CONST = REMINDER_LIST_NAME;
+
