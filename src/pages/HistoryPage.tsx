@@ -198,88 +198,121 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
         </div>
 
         {/* Grouped by date + store */}
-        {Object.entries(grouped)
-          .sort(([keyA], [keyB]) => {
-            const [dateA] = keyA.split('_');
-            const [dateB] = keyB.split('_');
-            return dateB.localeCompare(dateA);
-          })
-          .map(([key, storeItems]) => {
-            const [date, store] = key.split('_');
-            const storeTotal = storeItems.reduce((s, i) => s + i.total_price, 0);
+        {(() => {
+          let lastMonth = '';
+          
+          return Object.entries(grouped)
+            .sort(([keyA], [keyB]) => {
+              const [dateA] = keyA.split('_');
+              const [dateB] = keyB.split('_');
+              return dateB.localeCompare(dateA);
+            })
+            .map(([key, storeItems], index, arr) => {
+              const [date, store] = key.split('_');
+              const storeTotal = storeItems.reduce((s, i) => s + i.total_price, 0);
+              
+              // Month detection (ex: 2026-04)
+              const currentMonth = date.slice(0, 7);
+              const showMonthDivider = currentMonth !== lastMonth;
+              lastMonth = currentMonth;
 
-            return (
-              <div key={key} className="mb-6">
-                {/* Header for Date and Store */}
-                <div className="flex flex-col mb-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-bold text-foreground">
-                      {formatDate(date)}
-                    </p>
-                    <p className="text-xs font-medium text-muted-foreground">{fc(storeTotal)}</p>
-                  </div>
-                  <div className="flex items-center justify-between pb-2 border-b border-border">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-xs font-bold text-foreground uppercase">{store}</span>
+              const monthLabel = new Date(`${currentMonth}-01T12:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+              return (
+                <div key={key} className="relative">
+                  {/* Monthly Highlight Divider */}
+                  {showMonthDivider && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="py-4 flex items-center gap-4"
+                    >
+                      <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent" />
+                      <span className="text-[10px] uppercase tracking-[0.2em] font-black text-primary/60 bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
+                        {monthLabel}
+                      </span>
+                      <div className="flex-1 h-px bg-gradient-to-l from-primary/30 to-transparent" />
+                    </motion.div>
+                  )}
+
+                  {/* Store Separator Line (if not the first item in the month) */}
+                  {!showMonthDivider && index > 0 && (
+                    <div className="h-px w-full bg-border/40 my-4" />
+                  )}
+
+                  <div className="mb-6">
+                    {/* Header for Date and Store */}
+                    <div className="flex flex-col mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-bold text-foreground">
+                          {formatDate(date)}
+                        </p>
+                        <p className="text-xs font-medium text-muted-foreground">{fc(storeTotal)}</p>
+                      </div>
+                      <div className="flex items-center justify-between pb-2 border-b border-border">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-xs font-bold text-foreground uppercase">{store}</span>
+                          <button
+                            onClick={() => handleEditAddress(store, date)}
+                            className="text-[10px] text-muted-foreground flex items-center gap-0.5 ml-2 hover:text-primary transition-colors"
+                          >
+                            Editar <Pencil className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Scan banner - only show if none of the items in this store group were scanned */}
+                    {onNavigateToScanner && !storeItems.some(i => i.scanned) && (
                       <button
-                        onClick={() => handleEditAddress(store, date)}
-                        className="text-[10px] text-muted-foreground flex items-center gap-0.5 ml-2 hover:text-primary transition-colors"
+                        onClick={onNavigateToScanner}
+                        className="w-full flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2 text-left"
                       >
-                        Editar <Pencil className="w-2.5 h-2.5" />
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span className="text-[11px] text-amber-800">
+                          Escaneie o cupom fiscal desta compra para completar informações faltantes
+                        </span>
+                        <ScanLine className="w-4 h-4 text-amber-600 shrink-0 ml-auto" />
                       </button>
+                    )}
+
+                    {/* Items */}
+                    <div className="space-y-2">
+                      {storeItems.map(item => {
+                        const catColor = categoryColors[item.category] || 'bg-accent text-accent-foreground';
+                        const catIcon = categoryIcons[item.category] || '🛒';
+                        return (
+                          <SwipeableRow
+                            key={item.id}
+                            onSwipeLeft={() => handleDeleteItem(item.id)}
+                            leftIcon={<Trash2 className="w-5 h-5 text-destructive-foreground" />}
+                            leftBg="bg-destructive"
+                            onSwipeRight={() => handleAddToList(item)}
+                            rightIcon={<ListPlus className="w-5 h-5 text-primary-foreground" />}
+                            rightBg="bg-primary"
+                          >
+                            <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0 bg-background">
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{item.product_name}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
+                                    {catIcon} {item.category}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">{item.quantity} un</span>
+                                </div>
+                              </div>
+                              <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
+                            </div>
+                          </SwipeableRow>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
-
-                {/* Scan banner - only show if none of the items in this store group were scanned */}
-                {onNavigateToScanner && !storeItems.some(i => i.scanned) && (
-                  <button
-                    onClick={onNavigateToScanner}
-                    className="w-full flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2 text-left"
-                  >
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span className="text-[11px] text-amber-800">
-                      Escaneie o cupom fiscal desta compra para completar informações faltantes
-                    </span>
-                    <ScanLine className="w-4 h-4 text-amber-600 shrink-0 ml-auto" />
-                  </button>
-                )}
-
-                {/* Items */}
-                <div className="space-y-2">
-                  {storeItems.map(item => {
-                    const catColor = categoryColors[item.category] || 'bg-accent text-accent-foreground';
-                    const catIcon = categoryIcons[item.category] || '🛒';
-                    return (
-                      <SwipeableRow
-                        key={item.id}
-                        onSwipeLeft={() => handleDeleteItem(item.id)}
-                        leftIcon={<Trash2 className="w-5 h-5 text-destructive-foreground" />}
-                        leftBg="bg-destructive"
-                        onSwipeRight={() => handleAddToList(item)}
-                        rightIcon={<ListPlus className="w-5 h-5 text-primary-foreground" />}
-                        rightBg="bg-primary"
-                      >
-                        <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0 bg-background">
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{item.product_name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
-                                {catIcon} {item.category}
-                              </span>
-                              <span className="text-xs text-muted-foreground">{item.quantity} un</span>
-                            </div>
-                          </div>
-                          <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
-                        </div>
-                      </SwipeableRow>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+              );
+            });
+        })()}
       </motion.div>
 
       {/* Edit Address Dialog */}
