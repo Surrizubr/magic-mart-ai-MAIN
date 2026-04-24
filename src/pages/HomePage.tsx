@@ -120,41 +120,40 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
         </motion.div>
 
         {/* Action Cards - 2x2 grid */}
-        <motion.div variants={item} className="grid grid-cols-5 gap-3">
-          {/* Nova Lista - larger */}
+        <motion.div variants={item} className="grid grid-cols-2 gap-3">
+          {/* Scanner */}
           <button
-            onClick={() => onNavigate('lists')}
-            className="col-span-2 bg-white border border-border rounded-xl p-4 text-left"
+            onClick={() => onNavigate('scanner')}
+            className="gradient-primary rounded-xl p-4 text-left shadow-md flex flex-col"
           >
-            <ListTodo className="w-6 h-6 text-green-600 mb-4" />
-            <p className="text-sm font-bold text-foreground">{t('newList')}</p>
-            <p className="text-xs text-muted-foreground">{t('createList')}</p>
+            <ScanLine className="w-6 h-6 text-primary-foreground mb-4" />
+            <p className="text-sm font-bold text-primary-foreground">{t('scan')}</p>
+            <p className="text-xs text-primary-foreground/80">{t('receipt')}</p>
           </button>
           {/* Fazer Mercado */}
           <button
             onClick={() => onNavigate('shopping')}
-            className="col-span-3 bg-card rounded-xl border border-border p-4 text-left"
+            className="bg-card rounded-xl border border-border p-4 text-left flex flex-col"
           >
             <ShoppingCart className="w-6 h-6 text-primary mb-4" />
             <p className="text-sm font-bold text-foreground">{t('goShopping')}</p>
             <p className="text-xs text-muted-foreground">{t('addProducts')}</p>
           </button>
-        </motion.div>
-
-        <motion.div variants={item} className="grid grid-cols-2 gap-3">
+          {/* Nova Lista */}
           <button
-            onClick={() => onNavigate('scanner')}
-            className="gradient-primary rounded-xl p-4 text-left shadow-md"
+            onClick={() => onNavigate('lists')}
+            className="bg-white border border-border rounded-xl p-4 text-left flex flex-col"
           >
-            <ScanLine className="w-6 h-6 text-primary-foreground mb-2" />
-            <p className="text-sm font-bold text-primary-foreground">{t('scan')}</p>
-            <p className="text-xs text-primary-foreground/80">{t('receipt')}</p>
+            <ListTodo className="w-6 h-6 text-green-600 mb-4" />
+            <p className="text-sm font-bold text-foreground">{t('newList')}</p>
+            <p className="text-xs text-muted-foreground">{t('createList')}</p>
           </button>
+          {/* Compartilhar */}
           <button
             onClick={() => onNavigate('share')}
-            className="bg-card rounded-xl border border-border p-4 text-left"
+            className="bg-card rounded-xl border border-border p-4 text-left flex flex-col"
           >
-            <Share2 className="w-6 h-6 text-primary mb-2" />
+            <Share2 className="w-6 h-6 text-primary mb-4" />
             <p className="text-sm font-bold text-foreground">{t('share')}</p>
             <p className="text-xs text-muted-foreground">{t('activeLists')}</p>
           </button>
