@@ -124,11 +124,11 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
           {/* Nova Lista - larger */}
           <button
             onClick={() => onNavigate('lists')}
-            className="col-span-2 gradient-primary rounded-xl p-4 text-left"
+            className="col-span-2 bg-white border border-border rounded-xl p-4 text-left"
           >
-            <Plus className="w-6 h-6 text-primary-foreground mb-4" />
-            <p className="text-sm font-bold text-primary-foreground">{t('newList')}</p>
-            <p className="text-xs text-primary-foreground/80">{t('createList')}</p>
+            <Plus className="w-6 h-6 text-foreground mb-4" />
+            <p className="text-sm font-bold text-foreground">{t('newList')}</p>
+            <p className="text-xs text-muted-foreground">{t('createList')}</p>
           </button>
           {/* Fazer Mercado */}
           <button
@@ -144,11 +144,11 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
         <motion.div variants={item} className="grid grid-cols-2 gap-3">
           <button
             onClick={() => onNavigate('scanner')}
-            className="bg-card rounded-xl border border-border p-4 text-left"
+            className="gradient-primary rounded-xl p-4 text-left shadow-md"
           >
-            <ScanLine className="w-6 h-6 text-muted-foreground mb-2" />
-            <p className="text-sm font-bold text-foreground">{t('scan')}</p>
-            <p className="text-xs text-muted-foreground">{t('receipt')}</p>
+            <ScanLine className="w-6 h-6 text-primary-foreground mb-2" />
+            <p className="text-sm font-bold text-primary-foreground">{t('scan')}</p>
+            <p className="text-xs text-primary-foreground/80">{t('receipt')}</p>
           </button>
           <button
             onClick={() => onNavigate('share')}
@@ -254,7 +254,7 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
                         <div>
                           <p className="text-sm font-bold text-foreground uppercase">{s.product_name}</p>
                           <p className={`text-xs font-semibold ${isCritical ? 'text-destructive' : 'text-warning'}`}>~{daysLeft} {t('daysLeft')}</p>
-                          <p className="text-xs text-muted-foreground">{t('stock')}: {s.quantity} {s.unit}</p>
+                          <p className="text-xs text-muted-foreground">{t('stock')}: {s.quantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {s.unit}</p>
                         </div>
                       </div>
                     </div>

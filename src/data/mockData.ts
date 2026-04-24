@@ -2,24 +2,9 @@
 import { ShoppingList, StockItem, PurchaseHistory } from '@/types';
 import { storage } from '@/lib/storage';
 
-const defaultLists: ShoppingList[] = [
-  {
-    id: '1', name: 'Compras da semana', status: 'active',
-    total_items: 12, checked_items: 5, estimated_total: 187.50, actual_total: 0,
-    created_at: '2026-04-05', items: [
-      { id: '1a', list_id: '1', product_name: 'Arroz 5kg', category: 'Grãos', quantity: 1, unit: 'un', estimated_price: 22.90, actual_price: 0, is_checked: true },
-      { id: '1b', list_id: '1', product_name: 'Feijão 1kg', category: 'Grãos', quantity: 2, unit: 'un', estimated_price: 8.50, actual_price: 0, is_checked: true },
-    ],
-  },
-];
-
-const defaultStock: StockItem[] = [
-  { id: 's1', product_name: 'Arroz 5kg', category: 'Grãos', quantity: 1, unit: 'un', min_quantity: 2, daily_consumption_rate: 0.14, status: 'low', last_price: 22.90 },
-];
-
-const defaultHistory: PurchaseHistory[] = [
-  { id: 'h1', product_name: 'Arroz 5kg', category: 'Grãos', quantity: 1, price: 22.90, total_price: 22.90, store_name: 'Supermercado Extra', purchase_date: '2026-04-03' },
-];
+const defaultLists: ShoppingList[] = [];
+const defaultStock: StockItem[] = [];
+const defaultHistory: PurchaseHistory[] = [];
 
 // Cache síncrono para não quebrar a interface do usuário
 let stockCache: StockItem[] = [];
@@ -114,10 +99,18 @@ export async function saveHistory(data: PurchaseHistory[]) {
 }
 
 export async function resetAllData() {
+  // Clear Capacitor Preferences
   await storage.clear();
+  // Clear LocalStorage (including API Key, tabs, filters, etc.)
   localStorage.clear();
+  
   stockCache = [];
   listsCache = [];
   historyCache = [];
+  
+  // Also clear session-based state if any
+  sessionStorage.clear();
+  
+  // Reload to apply clean state
   window.location.reload();
 }

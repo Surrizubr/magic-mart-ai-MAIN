@@ -191,7 +191,7 @@ export function StockPage({ onBack }: StockPageProps) {
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent text-accent-foreground flex items-center gap-1`}>
                           {emoji} {s.category}
                         </span>
-                        <span className="text-xs text-muted-foreground">{s.quantity} {s.unit}</span>
+                        <span className="text-xs text-muted-foreground">{s.quantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {s.unit}</span>
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-1">
                         · comprado {sincePurchase !== null ? `${sincePurchase}d` : '—'} atrás
@@ -239,7 +239,7 @@ export function StockPage({ onBack }: StockPageProps) {
                               className="text-lg font-bold text-foreground cursor-pointer"
                               onClick={() => { setEditingQtyId(s.id); setEditingQtyValue(String(s.quantity)); }}
                             >
-                              {s.quantity}
+                              {s.quantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })}
                             </span>
                           )}
                           <span className="text-xs text-muted-foreground ml-1">{s.unit}</span>
@@ -251,7 +251,7 @@ export function StockPage({ onBack }: StockPageProps) {
                           <Plus className="w-4 h-4 text-primary-foreground" />
                         </button>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">mín: {s.min_quantity} {s.unit}</p>
+                      <p className="text-[10px] text-muted-foreground">mín: {s.min_quantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {s.unit}</p>
                       <div className="flex gap-2">
                         <button onClick={() => zeroQty(s.id)} className="text-[10px] text-primary font-medium">Zerar</button>
                         <button onClick={() => deleteItem(s.id)} className="text-[10px] text-destructive font-medium">Excluir</button>

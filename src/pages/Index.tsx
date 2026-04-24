@@ -18,11 +18,7 @@ import { TabId } from '@/types';
 
 const Index = () => {
   const { info } = useSubscription();
-  const [activeTab, setActiveTab] = useState<TabId>(() => {
-    const savedTab = localStorage.getItem('active_tab');
-    const validTabs: TabId[] = ['home', 'lists', 'stock', 'savings', 'history', 'reports', 'scanner', 'shopping', 'share', 'devtools'];
-    return validTabs.includes(savedTab as TabId) ? (savedTab as TabId) : 'home';
-  });
+  const [activeTab, setActiveTab] = useState<TabId>('home');
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuInitialSubMenu, setMenuInitialSubMenu] = useState<any>(null);
   const [historyFilter, setHistoryFilter] = useState<{ date?: string; store?: string }>(() => {
@@ -30,9 +26,7 @@ const Index = () => {
     return saved ? JSON.parse(saved) : {};
   });
 
-  useEffect(() => {
-    localStorage.setItem('active_tab', activeTab);
-  }, [activeTab]);
+  // Removed activeTab persistence as per user request to always start on Home
 
   useEffect(() => {
     localStorage.setItem('history_filter', JSON.stringify(historyFilter));
@@ -60,17 +54,39 @@ const Index = () => {
     }
   };
 
+  const tabOrder: TabId[] = ['home', 'lists', 'stock', 'savings', 'history', 'reports'];
+
+  const handleSwipe = (direction: 'left' | 'right') => {
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex === -1) return; // Not a swippable tab
+
+    if (direction === 'left' && currentIndex < tabOrder.length - 1) {
+      setActiveTab(tabOrder[currentIndex + 1]);
+    } else if (direction === 'right' && currentIndex > 0) {
+      setActiveTab(tabOrder[currentIndex - 1]);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background max-w-lg mx-auto relative">
+    <div className="min-h-screen bg-background max-w-lg mx-auto relative overflow-x-hidden">
       <RenewalBanner />
 
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, x: 10 }}
+          initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -10 }}
-          transition={{ duration: 0.15 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={(_, info) => {
+            const threshold = 50;
+            if (info.offset.x < -threshold) handleSwipe('left');
+            else if (info.offset.x > threshold) handleSwipe('right');
+          }}
+          className="touch-pan-y"
         >
           {renderPage()}
         </motion.div>
