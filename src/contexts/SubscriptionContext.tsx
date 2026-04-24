@@ -28,8 +28,22 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(u
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { devMode } = useDevMode();
-  const [status, setStatus] = useState<SubStatus>('inactive');
+  const [status, setStatus] = useState<SubStatus>(() => {
+    if (devMode) return 'active';
+    // Use user check inside useEffect or a more robust initialization
+    return 'inactive';
+  });
   const [loading, setLoading] = useState(true);
+
+  // Separate effect for initial status from localStorage once user is known
+  useEffect(() => {
+    if (user && !devMode) {
+      const cached = localStorage.getItem(`sub_status_${user.id}`);
+      if (cached === 'active') {
+        setStatus('active');
+      }
+    }
+  }, [user, devMode]);
   const [info, setInfo] = useState<SubscriptionInfo | null>(null);
   const [daysUntilExpiry, setDaysUntilExpiry] = useState(0);
 

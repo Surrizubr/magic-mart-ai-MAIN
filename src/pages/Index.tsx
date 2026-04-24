@@ -19,7 +19,15 @@ import { TabId } from '@/types';
 
 const Index = () => {
   const { info } = useSubscription();
-  const [navStack, setNavStack] = useState<TabId[]>(['home']);
+  const [navStack, setNavStack] = useState<TabId[]>(() => {
+    const saved = localStorage.getItem('nav_stack');
+    try {
+      const parsed = saved ? JSON.parse(saved) : ['home'];
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : ['home'];
+    } catch {
+      return ['home'];
+    }
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuInitialSubMenu, setMenuInitialSubMenu] = useState<any>(null);
   const [historyFilter, setHistoryFilter] = useState<{ date?: string; store?: string }>(() => {
@@ -37,6 +45,10 @@ const Index = () => {
     localStorage.setItem('history_filter', JSON.stringify(historyFilter));
   }, [historyFilter]);
 
+  useEffect(() => {
+    localStorage.setItem('nav_stack', JSON.stringify(navStack));
+  }, [navStack]);
+
   const navigateTo = (tab: TabId) => {
     if (tab === activeTab) return;
     setNavStack(prev => [...prev, tab]);
@@ -50,6 +62,10 @@ const Index = () => {
     }
   };
 
+  const backToHome = () => {
+    setNavStack(['home']);
+  };
+
   const navigateToHistoryFiltered = (date: string, store: string) => {
     setHistoryFilter({ date, store });
     navigateTo('history');
@@ -58,11 +74,11 @@ const Index = () => {
   const renderPage = () => {
     switch (activeTab) {
       case 'home': return <HomePage displayName={info?.display_name || undefined} onNavigate={navigateTo} onOpenMenu={() => setMenuOpen(true)} />;
-      case 'lists': return <ListsPage onBack={goBack} />;
-      case 'stock': return <StockPage onBack={goBack} />;
-      case 'savings': return <SavingsPage onBack={goBack} onNavigateToHistory={navigateToHistoryFiltered} />;
-      case 'history': return <HistoryPage onNavigateToScanner={() => navigateTo('scanner')} onBack={() => { setHistoryFilter({}); goBack(); }} filterDate={historyFilter.date} filterStore={historyFilter.store} />;
-      case 'reports': return <ReportsPage onBack={goBack} onNavigate={(tab) => navigateTo(tab as TabId)} />;
+      case 'lists': return <ListsPage onBack={backToHome} />;
+      case 'stock': return <StockPage onBack={backToHome} />;
+      case 'savings': return <SavingsPage onBack={backToHome} onNavigateToHistory={navigateToHistoryFiltered} />;
+      case 'history': return <HistoryPage onNavigateToScanner={() => navigateTo('scanner')} onBack={() => { setHistoryFilter({}); backToHome(); }} filterDate={historyFilter.date} filterStore={historyFilter.store} />;
+      case 'reports': return <ReportsPage onBack={backToHome} onNavigate={(tab) => navigateTo(tab as TabId)} />;
       case 'scanner': return <ScannerPage onBack={goBack} onNavigateToHistory={navigateToHistoryFiltered} onOpenMenu={() => { setMenuInitialSubMenu('gemini'); setMenuOpen(true); }} />;
       case 'shopping': return <ShoppingPage onNavigate={navigateTo} onBack={goBack} />;
       case 'share': return <SharePage onBack={goBack} />;
