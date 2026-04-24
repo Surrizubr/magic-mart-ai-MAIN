@@ -47,28 +47,40 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
   const totalMonth = historyData.reduce((sum, h) => sum + h.total_price, 0);
 
   // Pre-calculate price variations using all history
-  const priceVariations = (() => {
+  const { itemVariations, groupVariations } = (() => {
     const all = getHistory();
-    // Sort all history by date ascending to process in chronological order
     const sorted = [...all].sort((a, b) => a.purchase_date.localeCompare(b.purchase_date));
     
-    const variations: Record<string, number> = {};
+    const itemVars: Record<string, number> = {};
+    const groupVars: Record<string, number> = {};
     const lastPrices: Record<string, number> = {};
+    const groupStats: Record<string, { matchedCurrent: number; matchedPrevious: number }> = {};
 
     sorted.forEach(item => {
-      const name = item.product_name.toLowerCase();
+      const name = item.product_name.trim().toLowerCase();
       const currentPrice = item.price;
+      const groupKey = `${item.purchase_date}_${item.store_name}`;
       
       if (lastPrices[name] !== undefined) {
         const prevPrice = lastPrices[name];
         if (prevPrice > 0 && Math.abs(currentPrice - prevPrice) > 0.001) {
-          variations[item.id] = ((currentPrice - prevPrice) / prevPrice) * 100;
+          itemVars[item.id] = ((currentPrice - prevPrice) / prevPrice) * 100;
         }
+
+        if (!groupStats[groupKey]) groupStats[groupKey] = { matchedCurrent: 0, matchedPrevious: 0 };
+        groupStats[groupKey].matchedCurrent += item.quantity * currentPrice;
+        groupStats[groupKey].matchedPrevious += item.quantity * prevPrice;
       }
       lastPrices[name] = currentPrice;
     });
+
+    Object.entries(groupStats).forEach(([key, stats]) => {
+      if (stats.matchedPrevious > 0) {
+        groupVars[key] = ((stats.matchedCurrent - stats.matchedPrevious) / stats.matchedPrevious) * 100;
+      }
+    });
     
-    return variations;
+    return { itemVariations: itemVars, groupVariations: groupVars };
   })();
 
   // State for edit address dialog
@@ -421,6 +433,17 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                             {t('editBtn')} <Pencil className="w-2.5 h-2.5" />
                           </button>
                         </div>
+                        {groupVariations[key] !== undefined && (
+                          <div className={`mt-0.5 flex items-center gap-1 text-[11px] font-bold ${groupVariations[key] > 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                            {groupVariations[key] > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            <span>
+                              {Math.abs(groupVariations[key]).toFixed(1)}% {groupVariations[key] > 0 ? t('expensiveLabel') : t('cheaperLabel')}
+                            </span>
+                            <span className="text-muted-foreground font-normal">
+                              {t('thanPrevious')}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -465,10 +488,10 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                               </div>
                               <div className="text-right">
                                 <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
-                                {priceVariations[item.id] !== undefined && (
-                                  <div className={`flex items-center justify-end gap-0.5 text-[10px] font-bold ${priceVariations[item.id] > 0 ? 'text-destructive' : 'text-emerald-600'}`}>
-                                    {priceVariations[item.id] > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-                                    {Math.abs(priceVariations[item.id]).toFixed(1)}%
+                                {itemVariations[item.id] !== undefined && (
+                                  <div className={`flex items-center justify-end gap-0.5 text-[10px] font-bold ${itemVariations[item.id] > 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                                    {itemVariations[item.id] > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                                    {Math.abs(itemVariations[item.id]).toFixed(1)}%
                                   </div>
                                 )}
                               </div>
