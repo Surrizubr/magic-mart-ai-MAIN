@@ -36,7 +36,7 @@ interface SavingsPageProps {
 }
 
 export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
-  const { currency, formatCurrency: fc } = useLanguage();
+  const { lang, currency, formatCurrency: fc, t } = useLanguage();
   const allHistory = getHistory();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedWeekDay, setSelectedWeekDay] = useState<number | null>(null);
@@ -248,8 +248,8 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
   return (
     <div className="pb-20">
       <PageHeader
-        title="Economizar"
-        subtitle="Análise de preços e economia"
+        title={t('savings')}
+        subtitle={t('savingsAnalysis')}
         onBack={onBack}
       />
 
@@ -265,48 +265,48 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
               <span className="text-lg">🐷</span>
             </div>
             <div>
-              <p className="text-xs font-bold text-primary uppercase tracking-wider">Economia Potencial</p>
+              <p className="text-xs font-bold text-primary uppercase tracking-wider">{t('potentialSavings')}</p>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-bold text-foreground">{currency}</span>
-                <span className="text-sm text-muted-foreground">Necessário mais dados históricos</span>
+                <span className="text-sm text-muted-foreground">{t('moreHistoryNeeded')}</span>
               </div>
             </div>
           </div>
           <div className="mt-3 flex items-start gap-1.5 text-xs text-primary">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <p>Valor estimado. A economia real depende de disponibilidade, localização e variações de preço entre lojas.</p>
+            <p>{t('savingsDisclaimer')}</p>
           </div>
         </div>
 
-        <h3 className="text-sm font-bold text-foreground px-1">Dias Mais Baratos</h3>
+        <h3 className="text-sm font-bold text-foreground px-1">{t('cheapestDays')}</h3>
 
         {/* Legend */}
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-primary/80" />
-            <span className="text-xs text-muted-foreground">Muito barato</span>
+            <span className="text-xs text-muted-foreground">{t('veryCheap')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-primary/40" />
-            <span className="text-xs text-muted-foreground">Barato</span>
+            <span className="text-xs text-muted-foreground">{t('cheap')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-primary/20" />
-            <span className="text-xs text-muted-foreground">Normal</span>
+            <span className="text-xs text-muted-foreground">{t('ok')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-warning" />
-            <span className="text-xs text-muted-foreground">Caro</span>
+            <span className="text-xs text-muted-foreground">{t('expensive')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-destructive/60" />
-            <span className="text-xs text-muted-foreground">Muito caro</span>
+            <span className="text-xs text-muted-foreground">{t('veryExpensive')}</span>
           </div>
         </div>
 
         {/* Weekly Heatmap */}
         <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="text-sm font-bold text-foreground mb-3">Dias da Semana</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">{t('weekDaysTitle')}</h3>
           <div className="grid grid-cols-7 gap-2">
             {weekDays.map((day, i) => (
               <button
@@ -315,7 +315,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                 disabled={weekData[i] === 0}
                 className="flex flex-col items-center gap-1.5 group"
               >
-                <span className="text-[10px] font-medium text-muted-foreground">{day}</span>
+                <span className="text-[10px] font-medium text-muted-foreground">{t(day.toLowerCase())}</span>
                 <div className={`w-full aspect-square rounded-lg ${getWeekColor(weekData[i])} flex items-center justify-center transition-transform ${weekData[i] > 0 ? 'cursor-pointer group-hover:scale-110 group-active:scale-95' : ''}`}>
                   {weekData[i] > 0 && <span className="text-xs font-bold text-foreground">{weekData[i]}</span>}
                 </div>
@@ -324,13 +324,13 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           </div>
           <div className="flex items-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
             <Info className="w-3 h-3" />
-            <span>Últimas 4 semanas · Toque para ver os locais</span>
+            <span>{t('heatmapLegendWeek')}</span>
           </div>
         </div>
 
         {/* Monthly Heatmap */}
         <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="text-sm font-bold text-foreground mb-3">Dias do Mês</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">{t('monthDaysTitle')}</h3>
           <div className="grid grid-cols-7 gap-2">
             {monthData.map((d, i) => (
               <button
@@ -348,7 +348,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           </div>
           <div className="flex items-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
             <Info className="w-3 h-3" />
-            <span>Últimos 3 meses · Toque para ver os locais</span>
+            <span>{t('heatmapLegendMonth')}</span>
           </div>
         </div>
 
@@ -357,7 +357,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <TrendingDown className="w-4 h-4 text-primary" />
-              Melhores Locais para Comprar
+              {t('bestLocations')}
             </h3>
             <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">Ranking</span>
           </div>
@@ -378,27 +378,27 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground truncate">{store.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {store.itemCount} produtos monitorados
+                    {t('productsMonitored').replace('{count}', String(store.itemCount))}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-primary">
                     {store.score >= 0.99 ? 'Preço Base' : `${(store.score * 100).toFixed(1)}%`}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">Índice Economia</p>
+                  <p className="text-[10px] text-muted-foreground">{t('savingsIndex')}</p>
                 </div>
               </button>
             ))}
             {cheapestStores.length === 0 && (
               <p className="text-center text-xs text-muted-foreground py-8">
-                Histórico insuficiente para calcular economia por local.
+                {t('insufficientHistory')}
               </p>
             )}
           </div>
           
           <div className="mt-4 pt-4 border-t border-border/50">
             <p className="text-[10px] text-muted-foreground italic leading-relaxed">
-              * O Índice de Economia compara os preços pagos em cada local com o menor preço já registrado para os mesmos produtos. 100% indica que o local oferece consistentemente os melhores preços.
+              {t('savingsIndexLegend')}
             </p>
           </div>
         </div>
@@ -408,7 +408,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <TrendingDown className="w-4 h-4 text-emerald-500" />
-              Produtos com melhores descontos
+              {t('bestDiscounts')}
             </h3>
           </div>
           <div className="max-h-[350px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
@@ -422,10 +422,10 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                   <p className="text-sm font-bold text-foreground truncate group-hover:text-emerald-700 transition-colors">{v.name}</p>
                   <div className="flex items-center gap-3 mt-1">
                     <p className="text-[10px] text-muted-foreground font-medium">
-                      De: <span className="text-foreground">{fc(v.prevPrice)}</span>
+                      {t('from')} <span className="text-foreground">{fc(v.prevPrice)}</span>
                     </p>
                     <p className="text-[10px] text-emerald-700 font-bold">
-                      Para: <span className="text-emerald-800">{fc(v.currentPrice)}</span>
+                      {t('to')} <span className="text-emerald-800">{fc(v.currentPrice)}</span>
                     </p>
                   </div>
                 </div>
@@ -439,7 +439,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
               </button>
             ))}
             {productVariations.discounts.length === 0 && (
-              <p className="text-center text-xs text-muted-foreground py-4">Nenhuma queda de preço detectada recentemente.</p>
+              <p className="text-center text-xs text-muted-foreground py-4">{t('noPriceDrops')}</p>
             )}
           </div>
         </div>
@@ -449,7 +449,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-destructive" />
-              Produtos com maiores aumentos
+              {t('highestIncreases')}
             </h3>
           </div>
           <div className="max-h-[350px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
@@ -466,7 +466,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                       De: <span className="text-foreground">{fc(v.prevPrice)}</span>
                     </p>
                     <p className="text-[10px] text-destructive font-bold">
-                      Para: <span className="text-destructive-foreground">{fc(v.currentPrice)}</span>
+                      {t('to')} <span className="text-destructive-foreground">{fc(v.currentPrice)}</span>
                     </p>
                   </div>
                 </div>
@@ -480,7 +480,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
               </button>
             ))}
             {productVariations.increases.length === 0 && (
-              <p className="text-center text-xs text-muted-foreground py-4">Nenhum aumento significativo detectado.</p>
+              <p className="text-center text-xs text-muted-foreground py-4">{t('noIncreases')}</p>
             )}
           </div>
         </div>
@@ -509,7 +509,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                   <div>
                     <p className="text-sm font-bold text-foreground">{popupTitle}</p>
                     <p className="text-xs text-muted-foreground">
-                      {popupStores.length} local(is) visitado(s)
+                      {t('locationsVisited').replace('{count}', String(popupStores.length))}
                     </p>
                   </div>
                   <button
@@ -533,7 +533,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{store}</p>
                         <p className="text-xs text-muted-foreground">
-                          {info.count} {info.count === 1 ? 'item' : 'itens'} · {fc(info.total)}
+                          {info.count} {info.count === 1 ? t('item') : t('items')} · {fc(info.total)}
                         </p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -570,7 +570,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                     <h4 className="text-base font-bold text-foreground">{selectedVariation.name}</h4>
                     <p className={`text-xs font-bold ${selectedVariation.variation < 0 ? 'text-emerald-600' : 'text-destructive'} flex items-center gap-1`}>
                       {selectedVariation.variation < 0 ? <ArrowDown className="w-3.5 h-3.5" /> : <ArrowUp className="w-3.5 h-3.5" />}
-                      Variação de {Math.abs(selectedVariation.variation).toFixed(1)}%
+                      {t('variationOf').replace('{percent}', Math.abs(selectedVariation.variation).toFixed(1))}
                     </p>
                   </div>
                   <button onClick={closePopup} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
@@ -583,7 +583,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-wider">
                       <div className="w-2 h-2 rounded-full bg-primary" />
-                      Compra Recente
+                      {t('recentPurchase')}
                     </div>
                     <div className={`rounded-xl p-4 space-y-2 ${selectedVariation.variation < 0 ? 'bg-emerald-50 border border-emerald-100' : 'bg-destructive/5 border border-destructive/10'}`}>
                       <div className="flex items-center justify-between">
@@ -592,7 +592,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                         </span>
                         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                           <Calendar className="w-3 h-3" />
-                          {new Date(selectedVariation.currentDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', weekday: 'short' })}
+                          {new Date(selectedVariation.currentDate + 'T12:00:00').toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { day: '2-digit', month: 'short', weekday: 'short' })}
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
@@ -614,14 +614,14 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                       <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-                      Compra Anterior
+                      {t('previousPurchase')}
                     </div>
                     <div className="bg-secondary/30 rounded-xl p-4 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-foreground">{fc(selectedVariation.prevPrice)}</span>
                         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                           <Calendar className="w-3 h-3" />
-                          {new Date(selectedVariation.prevDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', weekday: 'short' })}
+                          {new Date(selectedVariation.prevDate + 'T12:00:00').toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { day: '2-digit', month: 'short', weekday: 'short' })}
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
@@ -642,7 +642,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
 
                 <div className="mt-8">
                   <Button onClick={closePopup} className="w-full gradient-primary text-primary-foreground border-0">
-                    Fechar Detalhes
+                    {t('closeDetails')}
                   </Button>
                 </div>
               </div>

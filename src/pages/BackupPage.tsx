@@ -67,7 +67,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
       toast.success(t('backupSuccess'));
     } catch (error) {
       console.error('Backup error:', error);
-      toast.error('Erro ao realizar backup.');
+      toast.error(t('backupError'));
     }
   };
 
@@ -107,7 +107,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
       return;
     }
     
-    if (confirm('Deseja restaurar o último backup realizado? Todos os dados atuais serão substituídos.')) {
+    if (confirm(t('confirmRestore'))) {
       await restoreData(last);
     }
   };
@@ -124,7 +124,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
       reader.onload = async (event) => {
         try {
           const json = JSON.parse(event.target?.result as string);
-          if (confirm('Deseja restaurar os dados deste arquivo? Todos os dados atuais serão substituídos.')) {
+          if (confirm(t('confirmRestore'))) {
             await restoreData(json);
           }
         } catch (err) {
@@ -155,7 +155,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
             <History className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-foreground">Status do Backup</h3>
+            <h3 className="text-sm font-bold text-foreground">{t('backupStatus')}</h3>
             <p className="text-xs text-muted-foreground mt-1">
               {lastBackupDate 
                 ? `${t('lastBackupFound')} ${lastBackupDate}`
@@ -175,7 +175,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
               <Download className="w-5 h-5" />
               <div className="text-left">
                 <p className="font-bold">{t('makeBackup')}</p>
-                <p className="text-[10px] opacity-80">Salvar dados no aparelho</p>
+                <p className="text-[10px] opacity-80">{t('saveOnDevice')}</p>
               </div>
             </div>
           </Button>
@@ -190,7 +190,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
               <RefreshCw className="w-5 h-5 text-primary" />
               <div className="text-left">
                 <p className="font-bold text-foreground">{t('restoreLastBackup')}</p>
-                <p className="text-[10px] text-muted-foreground">Recuperar backup local</p>
+                <p className="text-[10px] text-muted-foreground">{t('recoverLocalBackup')}</p>
               </div>
             </div>
           </Button>
@@ -205,7 +205,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
               <FileJson className="w-5 h-5 text-primary" />
               <div className="text-left">
                 <p className="font-bold text-foreground">{t('restoreFromFile')}</p>
-                <p className="text-[10px] text-muted-foreground">Selecionar arquivo .json</p>
+                <p className="text-[10px] text-muted-foreground">{t('selectJsonFile')}</p>
               </div>
             </div>
           </Button>
@@ -215,10 +215,9 @@ export function BackupPage({ onBack }: BackupPageProps) {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
           <div>
-            <p className="text-xs font-bold text-amber-900">Atenção</p>
+            <p className="text-xs font-bold text-amber-900">{t('attention')}</p>
             <p className="text-[11px] text-amber-800 leading-relaxed mt-0.5">
-              Ao restaurar um backup, todos os dados atuais (estoque, listas e histórico) serão 
-              <strong> permanentemente substituídos </strong> pelos dados contidos no backup.
+              {t('backupWarning')}
             </p>
           </div>
         </div>
@@ -227,8 +226,8 @@ export function BackupPage({ onBack }: BackupPageProps) {
       {isRestoring && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center space-y-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent animate-spin rounded-full" />
-          <p className="text-sm font-bold text-primary">Restaurando dados...</p>
-          <p className="text-xs text-muted-foreground">O app será reiniciado em instantes</p>
+          <p className="text-sm font-bold text-primary">{t('restoringData')}</p>
+          <p className="text-xs text-muted-foreground">{t('appWillRestart')}</p>
         </div>
       )}
     </div>

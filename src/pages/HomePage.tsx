@@ -254,7 +254,7 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
                         <div>
                           <p className="text-sm font-bold text-foreground uppercase">{s.product_name}</p>
                           <p className={`text-xs font-semibold ${isCritical ? 'text-destructive' : 'text-warning'}`}>~{daysLeft} {t('daysLeft')}</p>
-                          <p className="text-xs text-muted-foreground">{t('stock')}: {s.quantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {s.unit}</p>
+                          <p className="text-xs text-muted-foreground">{t('stock')}: {s.quantity.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { maximumFractionDigits: 3 })} {t(s.unit)}</p>
                         </div>
                       </div>
                     </div>

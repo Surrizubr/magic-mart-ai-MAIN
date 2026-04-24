@@ -144,7 +144,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
 
   const handleAddToList = (item: any) => {
     const lists = getLists();
-    let reminderList = lists.find(l => l.name === t('reminderListName') || l.name === 'Lembrete de Compras');
+    let reminderList = lists.find(l => l.name === t('reminderListName'));
 
     const newItem = {
       id: crypto.randomUUID(),
@@ -200,11 +200,11 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     const filtered = all.filter(h => h.purchase_date >= exportRange.start && h.purchase_date <= exportRange.end);
     
     if (filtered.length === 0) {
-      toast.error('Nenhum dado encontrado no período selecionado.');
+      toast.error(t('noDataFound'));
       return;
     }
 
-    const headers = ['Data', 'Estabelecimento', 'Produto', 'Categoria', 'Quantidade', 'Preço Unitário', 'Total'];
+    const headers = [t('purchaseDateLabel').replace('📅 ', '').replace(':', ''), t('locationLabel'), t('productName'), t('category'), t('quantity'), t('unitPriceLabel'), 'Total'];
     const csvContent = [
       headers.join(','),
       ...filtered.map(h => [
@@ -228,7 +228,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     link.click();
     document.body.removeChild(link);
     setShowExportModal(false);
-    toast.success(`${filtered.length} itens exportados com sucesso.`);
+    toast.success(`${filtered.length} ${t('exportSuccess')}`);
   };
 
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,7 +240,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
       try {
         const text = event.target?.result as string;
         const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-        if (lines.length < 2) throw new Error('Arquivo vazio ou inválido');
+        if (lines.length < 2) throw new Error(t('invalidFile'));
 
         const all = getHistory();
         let importedCount = 0;
@@ -285,16 +285,16 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
         if (importedCount > 0) {
           saveHistory(all);
           setHistoryData(all);
-          toast.success(`${importedCount} itens importados.${skippedCount > 0 ? ` (${skippedCount} duplicados ignorados)` : ''}`);
+          toast.success(`${importedCount} ${t('importSuccess')}${skippedCount > 0 ? ` (${skippedCount} ${t('duplicatesIgnored')})` : ''}`);
           setTimeout(() => window.location.reload(), 1000);
         } else if (skippedCount > 0) {
-          toast.info('Todos os itens já existem no histórico.');
+          toast.info(t('allDataExists'));
         } else {
-          toast.error('Nenhum dado válido encontrado para importar.');
+          toast.error(t('noDataFound'));
         }
       } catch (err) {
         console.error(err);
-        toast.error('Erro ao processar arquivo CSV. Verifique o formato.');
+        toast.error(t('csvFormatError'));
       }
     };
     reader.readAsText(file);
@@ -460,7 +460,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
                                     {catIcon} {item.category}
                                   </span>
-                                  <span className="text-xs text-muted-foreground">{item.quantity} un</span>
+                                  <span className="text-xs text-muted-foreground">{item.quantity} {t('un')}</span>
                                 </div>
                               </div>
                               <div className="text-right">
@@ -496,7 +496,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
               <Input
                 value={editAddress}
                 onChange={(e) => setEditAddress(e.target.value)}
-                placeholder="Nome do local ou endereço"
+                placeholder={t('locationLabel')}
                 className="flex-1 text-sm"
               />
               <Button
@@ -531,11 +531,11 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
       <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
         <DialogContent className="max-w-[90vw] rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-base">Exportar Histórico (CSV)</DialogTitle>
+            <DialogTitle className="text-base">{t('exportHistoryTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground uppercase">Data de Início</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase">{t('startDate')}</label>
               <Input
                 type="date"
                 value={exportRange.start}
@@ -544,7 +544,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground uppercase">Data de Fim</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase">{t('endDate')}</label>
               <Input
                 type="date"
                 value={exportRange.end}
@@ -554,13 +554,13 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
             </div>
             <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
               <p className="text-[10px] text-primary leading-tight">
-                O arquivo exportado pode ser aberto no Excel, Google Sheets ou importado de volta para este ou outro dispositivo.
+                {t('exportHint')}
               </p>
             </div>
           </div>
           <DialogFooter className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setShowExportModal(false)}>{t('cancelBtn')}</Button>
-            <Button className="flex-1 gradient-primary text-primary-foreground border-0" onClick={handleExportCSV}>Exportar</Button>
+            <Button className="flex-1 gradient-primary text-primary-foreground border-0" onClick={handleExportCSV}>{t('export')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

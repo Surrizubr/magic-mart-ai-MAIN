@@ -16,7 +16,7 @@ interface ListsPageProps {
   onBack?: () => void;
 }
 
-export function ListsPage({ onBack }: ListsPageProps) {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<Filter>('active');
   const [showNewList, setShowNewList] = useState(false);
   const [newName, setNewName] = useState('');
@@ -107,15 +107,15 @@ export function ListsPage({ onBack }: ListsPageProps) {
     if (direction === 'left') {
       // Delete
       setLists(prev => prev.filter(l => l.id !== listId));
-      toast.success('Lista excluída.');
+      toast.success(t('listDeleted'));
     } else {
       // Right: archive or unarchive
       if (list.status === 'archived') {
         setLists(prev => prev.map(l => l.id === listId ? { ...l, status: 'active' as const } : l));
-        toast.success('Lista restaurada.');
+        toast.success(t('listRestored'));
       } else {
         setLists(prev => prev.map(l => l.id === listId ? { ...l, status: 'archived' as const } : l));
-        toast.success('Lista arquivada.');
+        toast.success(t('listArchived'));
       }
     }
   };
@@ -132,16 +132,16 @@ export function ListsPage({ onBack }: ListsPageProps) {
   }
 
   const filters: { id: Filter; label: string; icon?: typeof ShoppingCart }[] = [
-    { id: 'active', label: 'Ativas', icon: ShoppingCart },
-    { id: 'completed', label: 'Concluídas', icon: CheckCircle2 },
-    { id: 'archived', label: 'Arquivo', icon: Archive },
+    { id: 'active', label: t('active'), icon: ShoppingCart },
+    { id: 'completed', label: t('completed'), icon: CheckCircle2 },
+    { id: 'archived', label: t('archive'), icon: Archive },
   ];
 
   return (
     <div className="pb-20">
       <PageHeader
-        title="Listas de Compras"
-        subtitle="Organize suas compras"
+        title={t('shoppingLists')}
+        subtitle={t('organizePurchases')}
         onBack={onBack}
         action={
           <button onClick={() => setShowNewList(true)} className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
@@ -174,7 +174,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
 
         {/* Swipe hint */}
         <p className="text-[10px] text-muted-foreground text-center">
-          ← Deslize para excluir · Deslize para arquivar →
+          {t('swipeListHint')}
         </p>
 
         {/* New List Form */}
@@ -190,17 +190,17 @@ export function ListsPage({ onBack }: ListsPageProps) {
                 <input
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
-                  placeholder="Nome da lista..."
+                  placeholder={t('listNamePlaceholder')}
                   className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-primary/30"
                   autoFocus
                   onKeyDown={e => e.key === 'Enter' && createList()}
                 />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={createList} className="gradient-primary text-primary-foreground border-0">
-                    Criar Lista
+                    {t('createList')}
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setShowNewList(false)}>
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                 </div>
               </div>
@@ -220,7 +220,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
             />
           ))}
           {filtered.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-8">Nenhuma lista encontrada</p>
+            <p className="text-center text-sm text-muted-foreground py-8">{t('noListsFound')}</p>
           )}
         </motion.div>
       </div>
@@ -239,6 +239,7 @@ function SwipeableListCard({
   onSelect: () => void;
   onSwipe: (dir: 'left' | 'right') => void;
 }) {
+  const { lang, t } = useLanguage();
   const [dragX, setDragX] = useState(0);
   const threshold = 100;
 
@@ -287,8 +288,8 @@ function SwipeableListCard({
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-foreground">{list.name}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {list.status === 'shopping' ? '🛒 Em compras · ' : ''}
-              {list.checked_items}/{list.total_items} itens
+              {list.status === 'shopping' ? `${t('inShopping')} · ` : ''}
+              {list.checked_items}/{list.total_items} {t('items').toLowerCase()}
             </p>
           </div>
         </div>

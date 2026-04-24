@@ -152,7 +152,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setProgressMsg(t('processingResponse'));
 
       const items: ReceiptItem[] = (resultData.items || []).map((item: any, i: number) => {
-        const product_name = item.product_name || item.name || 'Produto sem nome';
+        const product_name = item.product_name || item.name || t('unnamedProduct');
         const quantity = Number(item.quantity) || 1;
         const unit_price = Number(item.unit_price || item.price || 0);
         const total_price = Number(item.total_price || (quantity * unit_price) || 0);
@@ -191,7 +191,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setProgressMsg(t('completingAnalysis'));
 
       const finalResult: AIReceiptResult = {
-        store_name: resultData.store_name || 'Mercado Desconhecido',
+        store_name: resultData.store_name || t('unknownMarket'),
         store_address: resultData.store_address,
         date: resultData.date || new Date().toISOString().slice(0, 10),
         items,
@@ -207,7 +207,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setStep('results');
     } catch (err: any) {
       console.error('AI analysis error:', err);
-      const msg = err.message || 'Erro ao analisar cupom fiscal';
+      const msg = err.message || t('analysisError');
       setError(msg);
       toast.error(msg);
       setStep('capture');
@@ -351,7 +351,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
     const newId = `ai-new-${Date.now()}`;
     const newItem: ReceiptItem = {
       id: newId,
-      product_name: 'Novo Produto',
+      product_name: t('newProduct'),
       quantity: 1,
       unit: 'un',
       unit_price: 0,
@@ -491,7 +491,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 {t('getApiKeyHowTo')}
               </p>
               <ol className="text-xs text-muted-foreground space-y-1.5 pl-4 list-decimal">
-                <li>Acesse <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="font-mono text-primary underline">https://aistudio.google.com/apikey</a></li>
+                <li>Acesse <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="font-mono text-primary underline">aistudio.google.com/apikey</a></li>
                 <li>{t('loginToGoogle')}</li>
                 <li>{t('clickCreateKey')}</li>
                 <li>{t('copyKey')}</li>

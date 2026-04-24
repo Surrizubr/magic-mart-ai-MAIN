@@ -37,7 +37,7 @@ export function LoginPage() {
         );
 
         if (!popup) {
-          toast.error('O bloqueador de popups impediu o login. Por favor, autorize popups.');
+          toast.error(t('popupBlockedError'));
           return;
         }
 
@@ -60,7 +60,7 @@ export function LoginPage() {
       }
     } catch (err: any) {
       console.error('[Login] Error:', err);
-      toast.error(err.message || 'Erro ao iniciar login');
+      toast.error(err.message || t('loginError'));
     }
   };
 

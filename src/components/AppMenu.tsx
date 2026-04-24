@@ -66,11 +66,11 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
   const testConnectivity = async () => {
     const keyToTest = geminiKey.trim() || localStorage.getItem('gemini-api-key') || '';
     if (!keyToTest) {
-      toast.error('Informe a chave API antes de testar.');
+      toast.error(t('enterApiKeyBeforeTest'));
       return;
     }
 
-    setTestResult({ status: 'loading', message: 'Testando conexão com Gemini...' });
+    setTestResult({ status: 'loading', message: t('testingIAConnection') });
 
     try {
       const { GoogleGenAI } = await import("@google/genai");
@@ -78,18 +78,18 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
       
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: "Responda apenas com a palavra 'OK' se você estiver recebendo esta mensagem."
+        contents: t('testPrompt')
       });
       const text = response.text || '';
 
       if (text.includes('OK')) {
-        setTestResult({ status: 'success', message: 'Conexão estabelecida com sucesso! A IA respondeu: ' + text });
+        setTestResult({ status: 'success', message: t('iaConnectionSuccess') + ' ' + text });
       } else {
-        setTestResult({ status: 'error', message: 'A IA respondeu, mas o conteúdo foi inesperado: ' + text });
+        setTestResult({ status: 'error', message: t('iaUnexpectedResponse') + ' ' + text });
       }
     } catch (error: any) {
       console.error('Gemini Test Error:', error);
-      setTestResult({ status: 'error', message: 'Erro na conexão: ' + (error.message || 'Erro desconhecido') });
+      setTestResult({ status: 'error', message: t('connectionError') + ' ' + (error.message || t('unknownError')) });
     }
   };
 
@@ -97,10 +97,10 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
     if (info) {
       setTestResult({ 
         status: 'success', 
-        message: `Perfil (Supabase): ${info.display_name} (${info.email}). Stripe Status: ${info.stripe_status}` 
+        message: `${t('profileDataTitle')} ${info.display_name} (${info.email}). Stripe Status: ${info.stripe_status}` 
       });
     } else {
-      setTestResult({ status: 'error', message: 'Dados do perfil não carregados no SubscriptionContext. Tente atualizar a página.' });
+      setTestResult({ status: 'error', message: t('profileDataNotLoaded') });
     }
   };
 
@@ -128,7 +128,7 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
       const text = await navigator.clipboard.readText();
       if (text) setGeminiKey(text);
     } catch {
-      toast.error('Não foi possível acessar a área de transferência.');
+      toast.error(t('clipboardError'));
     }
   };
 
@@ -271,7 +271,7 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
                   className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-accent/30 hover:bg-accent/50 transition-colors gap-1"
                 >
                   <Send className="w-4 h-4 text-primary" />
-                  <span className="text-[10px] font-bold text-center">Testar Conexão IA</span>
+                  <span className="text-[10px] font-bold text-center">{t('testIAConnection')}</span>
                 </button>
 
                 <button 
@@ -279,7 +279,7 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
                   className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-accent/30 hover:bg-accent/50 transition-colors gap-1"
                 >
                   <Database className="w-4 h-4 text-primary" />
-                  <span className="text-[10px] font-bold text-center">Ver Dados Perfil</span>
+                  <span className="text-[10px] font-bold text-center">{t('viewProfileData')}</span>
                 </button>
               </div>
 
@@ -298,7 +298,7 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
                     <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                   )}
                   <div className="space-y-0.5 min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-tight">Diagnóstico</p>
+                    <p className="text-[10px] font-bold uppercase tracking-tight">{t('aiDiagnosis')}</p>
                     <p className="text-xs text-foreground break-words line-clamp-3">{testResult.message}</p>
                   </div>
                 </div>
@@ -474,14 +474,14 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
                         onClick={() => {
                           setDevMode(false);
                           onClose();
-                          toast.success('Modo Desenvolvedor desativado');
+                          toast.success(t('devModeDisabled'));
                         }}
                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 transition-colors mt-2"
                       >
                         <Settings className="w-5 h-5 text-orange-500" />
                         <div className="text-left flex-1">
-                          <p className="text-sm font-medium text-orange-500">Desativar Modo Desenvolvedor</p>
-                          <p className="text-xs text-muted-foreground text-orange-500/70">Voltar ao fluxo normal de auth</p>
+                          <p className="text-sm font-medium text-orange-500">{t('disableDevMode')}</p>
+                          <p className="text-xs text-muted-foreground text-orange-500/70">{t('backToNormalAuth')}</p>
                         </div>
                       </button>
                     )}

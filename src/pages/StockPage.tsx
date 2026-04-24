@@ -14,25 +14,34 @@ import { PurchaseHistory } from '@/types';
 
 type StatusFilter = 'all' | 'critical' | 'low' | 'ok';
 
-const statusConfig = {
-  critical: { label: 'Crítico', dot: 'bg-destructive', class: 'bg-destructive/10 text-destructive border-destructive/20' },
-  low: { label: 'Baixo', dot: 'bg-warning', class: 'bg-warning/10 text-warning-foreground border-warning/20' },
-  ok: { label: 'OK', dot: 'bg-primary', class: 'bg-accent text-accent-foreground border-primary/20' },
-  expired: { label: 'Vencido', dot: 'bg-muted-foreground', class: 'bg-muted text-muted-foreground border-border' },
+const statusConfig: Record<string, { label: string; dot: string; class: string }> = {
+  critical: { label: 'critical', dot: 'bg-destructive', class: 'bg-destructive/10 text-destructive border-destructive/20' },
+  low: { label: 'low', dot: 'bg-warning', class: 'bg-warning/10 text-warning-foreground border-warning/20' },
+  ok: { label: 'ok', dot: 'bg-primary', class: 'bg-accent text-accent-foreground border-primary/20' },
+  expired: { label: 'expired', dot: 'bg-muted-foreground', class: 'bg-muted text-muted-foreground border-border' },
 };
 
-const categoryIcons: Record<string, string> = {
-  'Laticínios': '🧀', 'Grãos': '🛒', 'Bebidas': '🥤', 'Temperos': '🧄',
-  'Limpeza': '✨', 'Carnes': '🥩', 'Frutas': '🍎', 'Alimentos': '🛒',
-  'Higiene': '♥', 'Hortifruti': '🥬', 'Padaria': '🍞',
-  'Transporte': '🚗', 'Outros': '📦',
+const categoryIcons: Record<string, { icon: string; key: string }> = {
+  'Laticínios': { icon: '🧀', key: 'dairy' },
+  'Grãos': { icon: '🛒', key: 'grains' },
+  'Bebidas': { icon: '🥤', key: 'beverages' },
+  'Temperos': { icon: '🧄', key: 'spices' },
+  'Limpeza': { icon: '✨', key: 'cleaning' },
+  'Carnes': { icon: '🥩', key: 'meats' },
+  'Frutas': { icon: '🍎', key: 'fruits' },
+  'Alimentos': { icon: '🛒', key: 'food' },
+  'Higiene': { icon: '♥', key: 'hygiene' },
+  'Hortifruti': { icon: '🥬', key: 'produce' },
+  'Padaria': { icon: '🍞', key: 'bakery' },
+  'Transporte': { icon: '🚗', key: 'transport' },
+  'Outros': { icon: '📦', key: 'others' },
 };
 
 interface StockPageProps {
   onBack?: () => void;
 }
 
-export function StockPage({ onBack }: StockPageProps) {
+  const { lang, t, formatCurrency: fc } = useLanguage();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [stock, setStock] = useState<StockItem[]>(() => {
@@ -73,7 +82,7 @@ export function StockPage({ onBack }: StockPageProps) {
     refreshStockStatuses();
     setStock(getStock());
 
-    toast.success('Produto adicionado ao estoque!');
+    toast.success(t('productAddedToStock'));
   };
 
   useEffect(() => {
@@ -101,17 +110,17 @@ export function StockPage({ onBack }: StockPageProps) {
   };
 
   const filters: { id: StatusFilter; label: string; dot?: string }[] = [
-    { id: 'all', label: 'Todos' },
-    { id: 'critical', label: 'Crítico', dot: 'bg-destructive' },
-    { id: 'low', label: 'Baixo', dot: 'bg-warning' },
-    { id: 'ok', label: 'OK', dot: 'bg-primary' },
+    { id: 'all', label: t('all') },
+    { id: 'critical', label: t('critical'), dot: 'bg-destructive' },
+    { id: 'low', label: t('low'), dot: 'bg-warning' },
+    { id: 'ok', label: t('ok'), dot: 'bg-primary' },
   ];
 
   return (
     <div className="pb-20">
       <PageHeader
-        title="Estoque"
-        subtitle={`${stock.length} produtos`}
+        title={t('stockText')}
+        subtitle={`${stock.length} ${t('items').toLowerCase()}`}
         onBack={onBack}
         action={
           <button onClick={() => setShowAddDialog(true)} className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
@@ -129,7 +138,7 @@ export function StockPage({ onBack }: StockPageProps) {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por produto ou categoria..."
+            placeholder={t('searchPlaceholder')}
             className="w-full bg-card rounded-xl border border-border pl-9 pr-3 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-primary/30"
           />
         </div>
@@ -152,7 +161,7 @@ export function StockPage({ onBack }: StockPageProps) {
 
         {/* Swipe hint */}
         <p className="text-[10px] text-muted-foreground text-center">
-          ← Deslize para excluir · Deslize para adicionar ao lembrete →
+          {t('swipeStockHint')}
         </p>
 
         {/* Items */}
@@ -181,28 +190,28 @@ export function StockPage({ onBack }: StockPageProps) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-bold text-foreground">{s.product_name}</p>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cfg.class}`}>
-                          {cfg.label}
+                          {t(cfg.label)}
                         </span>
                         <button className="text-xs text-muted-foreground flex items-center gap-0.5">
-                          <Pencil className="w-3 h-3" /> Editar
+                          <Pencil className="w-3 h-3" /> {t('edit')}
                         </button>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent text-accent-foreground flex items-center gap-1`}>
-                          {emoji} {s.category}
+                          {categoryIcons[s.category]?.icon || '🛒'} {t(categoryIcons[s.category]?.key || 'others')}
                         </span>
-                        <span className="text-xs text-muted-foreground">{s.quantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {s.unit}</span>
+                        <span className="text-xs text-muted-foreground">{s.quantity.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { maximumFractionDigits: 3 })} {t(s.unit)}</span>
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-1">
-                        · comprado {sincePurchase !== null ? `${sincePurchase}d` : '—'} atrás
+                        · {t('purchased')} {sincePurchase !== null ? `${sincePurchase}d` : '—'} {t('ago')}
                       </p>
                       <p className={`text-[11px] font-medium mt-0.5 ${daysColor}`}>
-                        · ~{daysLeft}d restantes
+                        · ~{daysLeft} {t('daysRemaining')}
                       </p>
                       {s.learned_consumption && (
                         <p className="text-[10px] text-primary mt-0.5 flex items-center gap-1">
                           <Sparkles className="w-3 h-3" />
-                          Consumo aprendido ({s.purchase_count} compras, ~{s.avg_duration_days}d por ciclo)
+                          {t('learnedConsumption')} ({s.purchase_count} {t('purchases')}, ~{s.avg_duration_days}d {t('perCycle')})
                         </p>
                       )}
                     </div>
@@ -239,10 +248,10 @@ export function StockPage({ onBack }: StockPageProps) {
                               className="text-lg font-bold text-foreground cursor-pointer"
                               onClick={() => { setEditingQtyId(s.id); setEditingQtyValue(String(s.quantity)); }}
                             >
-                              {s.quantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })}
+                              {s.quantity.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { maximumFractionDigits: 3 })}
                             </span>
                           )}
-                          <span className="text-xs text-muted-foreground ml-1">{s.unit}</span>
+                          <span className="text-xs text-muted-foreground ml-1">{t(s.unit)}</span>
                         </div>
                         <button
                           onClick={() => updateQty(s.id, 1)}
@@ -251,10 +260,10 @@ export function StockPage({ onBack }: StockPageProps) {
                           <Plus className="w-4 h-4 text-primary-foreground" />
                         </button>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">mín: {s.min_quantity.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} {s.unit}</p>
+                      <p className="text-[10px] text-muted-foreground">{t('minQuantity')}: {s.min_quantity.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { maximumFractionDigits: 3 })} {t(s.unit)}</p>
                       <div className="flex gap-2">
-                        <button onClick={() => zeroQty(s.id)} className="text-[10px] text-primary font-medium">Zerar</button>
-                        <button onClick={() => deleteItem(s.id)} className="text-[10px] text-destructive font-medium">Excluir</button>
+                        <button onClick={() => zeroQty(s.id)} className="text-[10px] text-primary font-medium">{t('zero')}</button>
+                        <button onClick={() => deleteItem(s.id)} className="text-[10px] text-destructive font-medium">{t('delete')}</button>
                       </div>
                     </div>
                   </div>
