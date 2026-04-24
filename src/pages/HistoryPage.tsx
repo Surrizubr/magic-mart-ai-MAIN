@@ -331,7 +331,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
               <input 
                 id="csv-import-input" 
                 type="file" 
-                accept=".csv" 
+                accept=".csv,text/csv,application/vnd.ms-excel,text/plain" 
                 className="hidden" 
                 onChange={handleImportCSV}
               />
