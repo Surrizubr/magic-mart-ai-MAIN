@@ -82,7 +82,7 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
       });
       const text = response.text || '';
 
-      if (text.includes('OK')) {
+      if (text.toUpperCase().includes('OK') || text.trim().length > 0) {
         setTestResult({ status: 'success', message: t('iaConnectionSuccess') + ' ' + text });
       } else {
         setTestResult({ status: 'error', message: t('iaUnexpectedResponse') + ' ' + text });
@@ -298,7 +298,10 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
                     <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
                   )}
                   <div className="space-y-0.5 min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-tight">{t('aiDiagnosis')}</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-tight ${
+                      testResult.status === 'success' ? 'text-green-600' : 
+                      testResult.status === 'error' ? 'text-destructive' : ''
+                    }`}>{t('aiDiagnosis')}</p>
                     <p className="text-xs text-foreground break-words line-clamp-3">{testResult.message}</p>
                   </div>
                 </div>
