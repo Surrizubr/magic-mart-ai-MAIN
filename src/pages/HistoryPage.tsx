@@ -30,7 +30,7 @@ const categoryIcons: Record<string, string> = {
 };
 
 interface HistoryPageProps {
-  onNavigateToScanner?: () => void;
+  onNavigateToScanner?: (ctx?: { date: string; store: string }) => void;
   onBack?: () => void;
   filterDate?: string;
   filterStore?: string;
@@ -447,7 +447,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                     {/* Scan banner - only show if none of the items in this store group were scanned */}
                     {onNavigateToScanner && !storeItems.some(i => i.scanned) && (
                       <button
-                        onClick={onNavigateToScanner}
+                        onClick={() => onNavigateToScanner({ date, store })}
                         className="w-full flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2 text-left"
                       >
                         <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />

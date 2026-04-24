@@ -35,6 +35,7 @@ const Index = () => {
     const saved = localStorage.getItem('history_filter');
     return saved ? JSON.parse(saved) : {};
   });
+  const [scannerContext, setScannerContext] = useState<{ date?: string; store?: string } | null>(null);
 
   const activeTab = navStack[navStack.length - 1] || 'home';
 
@@ -82,9 +83,9 @@ const Index = () => {
       case 'lists': return <ListsPage key={`lists-${key}`} onBack={backToHome} />;
       case 'stock': return <StockPage key={`stock-${key}`} onBack={backToHome} />;
       case 'savings': return <SavingsPage key={`savings-${key}`} onBack={backToHome} onNavigateToHistory={navigateToHistoryFiltered} />;
-      case 'history': return <HistoryPage key={`history-${key}`} onNavigateToScanner={() => navigateTo('scanner')} onBack={() => { setHistoryFilter({}); backToHome(); }} filterDate={historyFilter.date} filterStore={historyFilter.store} />;
+      case 'history': return <HistoryPage key={`history-${key}`} onNavigateToScanner={(ctx) => { setScannerContext(ctx || null); navigateTo('scanner'); }} onBack={() => { setHistoryFilter({}); backToHome(); }} filterDate={historyFilter.date} filterStore={historyFilter.store} />;
       case 'reports': return <ReportsPage key={`reports-${key}`} onBack={backToHome} onNavigate={(tab) => navigateTo(tab as TabId)} />;
-      case 'scanner': return <ScannerPage key={`scanner-${key}`} onBack={goBack} onNavigateToHistory={navigateToHistoryFiltered} onOpenMenu={() => { setMenuInitialSubMenu('gemini'); setMenuOpen(true); }} />;
+      case 'scanner': return <ScannerPage key={`scanner-${key}`} initialDate={scannerContext?.date} initialStore={scannerContext?.store} onBack={() => { setScannerContext(null); goBack(); }} onNavigateToHistory={navigateToHistoryFiltered} onOpenMenu={() => { setMenuInitialSubMenu('gemini'); setMenuOpen(true); }} />;
       case 'shopping': return <ShoppingPage key={`shopping-${key}`} onNavigate={navigateTo} onBack={goBack} />;
       case 'share': return <SharePage key={`share-${key}`} onBack={goBack} />;
       case 'devtools': return <DevToolsPage key={`devtools-${key}`} onBack={goBack} />;

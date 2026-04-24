@@ -43,9 +43,11 @@ interface ScannerPageProps {
   onBack?: () => void;
   onNavigateToHistory?: (date: string, store: string) => void;
   onOpenMenu?: () => void;
+  initialDate?: string;
+  initialStore?: string;
 }
 
-export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: ScannerPageProps) {
+export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDate, initialStore }: ScannerPageProps) {
   const { lang, currency, formatCurrency: fc, t } = useLanguage();
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
@@ -196,9 +198,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setProgressMsg(t('completingAnalysis'));
 
       const finalResult: AIReceiptResult = {
-        store_name: resultData.store_name || t('unknownMarket'),
+        store_name: resultData.store_name || initialStore || t('unknownMarket'),
         store_address: resultData.store_address,
-        date: resultData.date || new Date().toISOString().slice(0, 10),
+        date: resultData.date || initialDate || new Date().toISOString().slice(0, 10),
         items,
         receipt_total: resultData.receipt_total || 0,
         items_sum: itemsSum,
@@ -230,9 +232,27 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
     setDateError(false);
 
     const receiptId = `receipt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
+    
     // Save to purchase_history
-    const history = getHistory();
+    let history = getHistory();
+    
+    // If we are updating an existing purchase from history page
+    if (initialDate && initialStore) {
+      const oldItems = history.filter(h => h.purchase_date === initialDate && h.store_name === initialStore);
+      
+      // "Undo" the previous stock additions
+      const stock = getStock();
+      oldItems.forEach(oldItem => {
+        const stockItem = stock.find(s => s.product_name.toLowerCase() === oldItem.product_name.toLowerCase());
+        if (stockItem) {
+          stockItem.quantity = Math.max(0, stockItem.quantity - oldItem.quantity);
+        }
+      });
+      saveStock(stock);
+
+      history = history.filter(h => !(h.purchase_date === initialDate && h.store_name === initialStore));
+    }
+
     result.items.forEach(item => {
       history.push({
         id: `h_${Date.now()}_${Math.random().toString(36).slice(2)}`,

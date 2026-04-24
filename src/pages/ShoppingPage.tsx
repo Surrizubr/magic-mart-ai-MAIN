@@ -233,6 +233,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
         total_price: item.price * item.quantity,
         store_name: storeName,
         purchase_date: new Date().toISOString().slice(0, 10),
+        scanned: false,
       });
     });
     

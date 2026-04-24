@@ -88,6 +88,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
         total_price: (item.actual_price || item.estimated_price) * item.quantity,
         store_name: storeName, purchase_date: new Date().toISOString().slice(0, 10),
         list_id: updatedList.id,
+        scanned: false,
       });
     });
 

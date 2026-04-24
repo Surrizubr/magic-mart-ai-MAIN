@@ -72,6 +72,7 @@ export function StockPage({ onBack }: StockPageProps) {
       total_price: price,
       store_name: 'Entrada Manual',
       purchase_date: today,
+      scanned: false,
     };
     const history = getHistory();
     history.unshift(historyEntry);
