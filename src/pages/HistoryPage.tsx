@@ -422,8 +422,8 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                         </p>
                         <p className="text-xs font-medium text-muted-foreground">{fc(storeTotal)}</p>
                       </div>
-                      <div className="flex items-center justify-between pb-2 border-b border-border">
-                        <div className="flex items-center gap-1.5">
+                      <div className="pb-2 border-b border-border">
+                        <div className="flex items-center gap-1.5 mb-1.5">
                           <MapPin className="w-3.5 h-3.5 text-primary" />
                           <span className="text-xs font-bold text-foreground uppercase">{store}</span>
                           <button
@@ -434,13 +434,10 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                           </button>
                         </div>
                         {groupVariations[key] !== undefined && (
-                          <div className={`mt-0.5 flex items-center gap-1 text-[11px] font-bold ${groupVariations[key] > 0 ? 'text-destructive' : 'text-emerald-600'}`}>
-                            {groupVariations[key] > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          <div className={`mt-1 flex items-center flex-wrap gap-1 text-[12px] font-bold ${groupVariations[key] > 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                            {groupVariations[key] > 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                             <span>
-                              {Math.abs(groupVariations[key]).toFixed(1)}% {groupVariations[key] > 0 ? t('expensiveLabel') : t('cheaperLabel')}
-                            </span>
-                            <span className="text-muted-foreground font-normal">
-                              {t('thanPrevious')}
+                              {t('thisPurchaseWas')} {Math.abs(groupVariations[key]).toFixed(1)}% {groupVariations[key] > 0 ? t('expensiveLabel') : t('cheaperLabel')} {t('thanPrevious')}
                             </span>
                           </div>
                         )}
