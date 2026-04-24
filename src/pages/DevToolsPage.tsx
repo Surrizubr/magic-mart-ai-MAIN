@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { toast } from 'sonner';
 import { Key, Send, Database, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { APP_VERSION, LAST_DEPLOY } from '@/version';
 

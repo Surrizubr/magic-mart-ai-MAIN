@@ -9,6 +9,7 @@ import { computeDaysLeft, deriveStatus, refreshStockStatuses, syncLastPurchaseDa
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { addToReminderList } from '@/lib/reminderList';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { AddStockItemDialog, AddStockItemResult } from '@/components/AddStockItemDialog';
 import { PurchaseHistory } from '@/types';
 

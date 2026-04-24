@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingList, ShoppingListItem, StockItem } from '@/types';
 import { ListDetailPage } from './ListDetailPage';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type Filter = 'active' | 'completed' | 'archived';
 
