@@ -1,25 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Globe, Settings, Info, RotateCcw, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle, CreditCard, RefreshCw, Undo2, LogOut, Send, Database, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Palette, Globe, Settings, Info, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle, CreditCard, RefreshCw, Undo2, LogOut, Send, Database, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { useLanguage, Lang } from '@/contexts/LanguageContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useDevMode } from '@/contexts/DevModeContext';
 import { supabase } from '@/integrations/supabase/client';
-import { resetAllData } from '@/data/mockData';
 import { toast } from 'sonner';
 import { TabId } from '@/types';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 type SubMenu = null | 'themes' | 'languages' | 'preferences' | 'about' | 'gemini' | 'payment' | 'backup';
 
@@ -54,7 +43,6 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
     }
   }, [open, initialSubMenu]);
 
-  const [confirmReset, setConfirmReset] = useState(false);
   const [geminiKey, setGeminiKey] = useState('');
   const [geminiHasKey, setGeminiHasKey] = useState(() => !!localStorage.getItem('gemini-api-key'));
 
@@ -115,13 +103,6 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
       setCanRefund(daysSinceStart <= 30);
     }
   }, [info]);
-
-  const handleReset = () => {
-    resetAllData();
-    setConfirmReset(false);
-    onClose();
-    window.location.reload();
-  };
 
   const handleGeminiPaste = async () => {
     try {
@@ -447,17 +428,6 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
                     <div className="border-t border-border my-3" />
 
                     <button
-                      onClick={() => setConfirmReset(true)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors"
-                    >
-                      <RotateCcw className="w-5 h-5 text-destructive" />
-                      <div className="text-left flex-1">
-                        <p className="text-sm font-medium text-destructive">{t('resetAll')}</p>
-                        <p className="text-xs text-muted-foreground">{t('resetDesc')}</p>
-                      </div>
-                    </button>
-
-                    <button
                       onClick={async () => {
                         await supabase.auth.signOut();
                         setDevMode(false);
@@ -496,20 +466,6 @@ export function AppMenu({ open, onClose, initialSubMenu, onNavigate }: AppMenuPr
         )}
       </AnimatePresence>
 
-      <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('resetAll')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('confirmReset')}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t('confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

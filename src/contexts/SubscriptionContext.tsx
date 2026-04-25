@@ -136,9 +136,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const checkSubscription = useCallback(async ({ forceSync = false }: { forceSync?: boolean } = {}) => {
+    setLoading(true);
     if (!user) {
       applySubscriptionState(null);
-      localStorage.removeItem(`sub_status_${user?.id}`);
+      if (user?.id) localStorage.removeItem(`sub_status_${user.id}`);
       setLoading(false);
       return;
     }

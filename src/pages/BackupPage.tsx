@@ -1,11 +1,22 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Upload, History, FileJson, AlertTriangle, CheckCircle2, ChevronLeft, RefreshCw } from 'lucide-react';
+import { Download, Upload, History, FileJson, AlertTriangle, CheckCircle2, ChevronLeft, RefreshCw, RotateCcw } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { storage } from '@/lib/storage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
+import { resetAllData } from '@/data/mockData';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface BackupPageProps {
   onBack: () => void;
@@ -15,6 +26,13 @@ export function BackupPage({ onBack }: BackupPageProps) {
   const { t } = useLanguage();
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const handleReset = () => {
+    resetAllData();
+    setConfirmReset(false);
+    window.location.reload();
+  };
 
   useEffect(() => {
     const checkLastBackup = async () => {
@@ -84,7 +102,11 @@ export function BackupPage({ onBack }: BackupPageProps) {
 
       // Restore each key
       for (const [key, value] of Object.entries(data)) {
-        await storage.set(key, value);
+        if (key === 'gemini-api-key' && typeof value === 'string') {
+          localStorage.setItem(key, value);
+        } else {
+          await storage.set(key, value);
+        }
       }
 
       toast.success(t('restoreSuccess'));
@@ -221,6 +243,22 @@ export function BackupPage({ onBack }: BackupPageProps) {
             </p>
           </div>
         </div>
+
+        <div className="pt-2">
+          <Button
+            variant="outline"
+            onClick={() => setConfirmReset(true)}
+            className="w-full h-14 bg-destructive/5 border-destructive/20 hover:bg-destructive/10 shadow-sm flex items-center justify-between px-6 group transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <RotateCcw className="w-5 h-5 text-destructive group-hover:rotate-[-45deg] transition-transform" />
+              <div className="text-left">
+                <p className="font-bold text-destructive">{t('resetAll')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('resetDesc')}</p>
+              </div>
+            </div>
+          </Button>
+        </div>
       </div>
 
       {isRestoring && (
@@ -230,6 +268,21 @@ export function BackupPage({ onBack }: BackupPageProps) {
           <p className="text-xs text-muted-foreground">{t('appWillRestart')}</p>
         </div>
       )}
+
+      <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
+        <AlertDialogContent className="w-[90vw] rounded-2xl max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('resetAll')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('confirmReset')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row gap-3">
+            <AlertDialogCancel className="mt-0 flex-1 rounded-xl">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReset} className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl border-0">
+              {t('confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
