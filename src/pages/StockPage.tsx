@@ -35,6 +35,7 @@ const categoryIcons: Record<string, { icon: string; key: string }> = {
   'Hortifruti': { icon: '🥬', key: 'produce' },
   'Padaria': { icon: '🍞', key: 'bakery' },
   'Restaurante': { icon: '🍽️', key: 'restaurant' },
+  'Manutenção': { icon: '🛠️', key: 'maintenance' },
   'Transporte': { icon: '🚗', key: 'transport' },
   'Outros': { icon: '📦', key: 'others' },
 };

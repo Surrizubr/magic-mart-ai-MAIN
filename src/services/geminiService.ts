@@ -50,7 +50,7 @@ export async function analyzeWithGemini(images: string[], prompt: string, provid
         store_address: { type: Type.STRING },
         establishment_type: { 
           type: Type.STRING, 
-          enum: ["supermarket", "restaurant", "transport"] 
+          enum: ["supermarket", "restaurant", "transport", "maintenance"] 
         },
         date: { type: Type.STRING },
         receipt_total: { type: Type.NUMBER },
@@ -109,7 +109,7 @@ Analise a imagem e extraia os dados exatamente no seguinte formato JSON:
 {
   "store_name": "Nome da Loja",
   "store_address": "Endereço (opcional)",
-  "establishment_type": "supermarket | restaurant | transport",
+  "establishment_type": "supermarket | restaurant | transport | maintenance",
   "date": "YYYY-MM-DD",
   "receipt_total": 0.00,
   "items": [
@@ -133,10 +133,12 @@ REGRAS:
    - "restaurant": para bares, restaurantes, lanchonetes, padaria (se for consumo local), etc.
    - "supermarket": para mercados, mercearias, hortifruti, etc.
    - "transport": para postos de combustível, apps de transporte, pedágios, etc.
-   - REGRAS DE FALLBACK: Se houver dúvida, analise os itens: itens de consumo imediato ou refeições indicam "restaurant"; combustível ou serviços de mobilidade indicam "transport"; compras de mercearia variadas indicam "supermarket". Se ainda assim não for possível identificar, use "supermarket" como padrão.
-4. Categorias de ITENS: Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Outros. 
+   - "maintenance": para lojas de material de construção, ferragens, hidráulica, elétrica, itens de manutenção da casa, etc.
+   - REGRAS DE FALLBACK: Se houver dúvida, analise os itens: itens de consumo imediato ou refeições indicam "restaurant"; combustível ou serviços de mobilidade indicam "transport"; parafusos, lâmpadas, torneiras ou ferramentas indicam "maintenance"; compras de mercearia variadas indicam "supermarket". Se ainda assim não for possível identificar, use "supermarket" como padrão.
+4. Categorias de ITENS: Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Manutenção, Outros. 
    - Se establishment_type for "restaurant", a categoria de TODOS os itens deve ser obrigatoriamente "Restaurante".
+   - Se establishment_type for "maintenance", a categoria de TODOS os itens deve ser obrigatoriamente "Manutenção".
 5. Identifique itens duplicados e remova-os.
 6. Retorne APENAS o JSON válido, sem qualquer texto adicional antes ou depois.`;
 
-export const PRODUCT_PROMPT = `Você é um assistente de compras. Analise a imagem e identifique o nome do produto e sua categoria (Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Outros). Retorne apenas um JSON: { "product_name": "...", "category": "..." }`;
+export const PRODUCT_PROMPT = `Você é um assistente de compras. Analise a imagem e identifique o nome do produto e sua categoria (Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Manutenção, Outros). Retorne apenas um JSON: { "product_name": "...", "category": "..." }`;

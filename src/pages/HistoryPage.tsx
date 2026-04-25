@@ -25,12 +25,13 @@ const categoryColors: Record<string, string> = {
   'Alimentos': 'bg-accent text-accent-foreground',
   'Hortifruti': 'bg-green-50 text-green-700',
   'Restaurante': 'bg-amber-50 text-amber-700',
+  'Manutenção': 'bg-slate-50 text-slate-700',
 };
 
 const categoryIcons: Record<string, string> = {
   'Padaria': '🍞', 'Alimentos': '🛒', 'Higiene': '♥', 'Limpeza': '✨',
   'Bebidas': '🥤', 'Grãos': '🛒', 'Laticínios': '🧀', 'Carnes': '🥩',
-  'Frutas': '🍎', 'Hortifruti': '🥬', 'Restaurante': '🍽️',
+  'Frutas': '🍎', 'Hortifruti': '🥬', 'Restaurante': '🍽️', 'Manutenção': '🛠️',
 };
 
 interface HistoryPageProps {

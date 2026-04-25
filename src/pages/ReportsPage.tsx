@@ -124,6 +124,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     'Padaria': 'Alimentos',
     'Doces': 'Alimentos',
     'Restaurante': 'Restaurante',
+    'Manutenção': 'Manutenção',
   };
 
   const categoryTotals = filteredHistory.reduce<Record<string, number>>((acc, h) => {

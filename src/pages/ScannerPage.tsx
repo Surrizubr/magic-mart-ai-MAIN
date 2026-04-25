@@ -29,7 +29,7 @@ interface ReceiptItem {
 interface AIReceiptResult {
   store_name: string;
   store_address?: string;
-  establishment_type: 'supermarket' | 'restaurant' | 'transport';
+  establishment_type: 'supermarket' | 'restaurant' | 'transport' | 'maintenance';
   date: string;
   items: ReceiptItem[];
   receipt_total: number;
@@ -469,7 +469,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
       total_price: 0,
       discount_amount: 0,
       discounted_price: 0,
-      category: result.establishment_type === 'restaurant' ? 'Restaurante' : 'Outros',
+      category: result.establishment_type === 'restaurant' ? 'Restaurante' : (result.establishment_type === 'maintenance' ? 'Manutenção' : 'Outros'),
     };
     const newItems = [...result.items, newItem];
     const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
@@ -789,18 +789,19 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
             {/* General Classification */}
             <div className="space-y-2 pt-1 border-t border-border/50">
               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('generalClassification')}</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {[
                   { id: 'supermarket', label: t('supermarket'), icon: '🛒' },
                   { id: 'restaurant', label: t('restaurant'), icon: '🍽️' },
                   { id: 'transport', label: t('transport'), icon: '🚗' },
+                  { id: 'maintenance', label: t('maintenance'), icon: '🛠️' },
                 ].map((cls) => (
                   <button
                     key={cls.id}
                     onClick={() => {
                       const newItems = result.items.map(item => ({
                         ...item,
-                        category: cls.id === 'restaurant' ? 'Restaurante' : item.category
+                        category: cls.id === 'restaurant' ? 'Restaurante' : (cls.id === 'maintenance' ? 'Manutenção' : item.category)
                       }));
                       setResult({ ...result, establishment_type: cls.id as any, items: newItems });
                     }}
