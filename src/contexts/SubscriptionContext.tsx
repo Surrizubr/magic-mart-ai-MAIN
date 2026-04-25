@@ -221,9 +221,17 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   const presentPaywall = async () => {
     setLoading(true);
-    const purchased = await RevenueCatService.presentPaywall();
-    if (purchased) {
-      await checkSubscription({ forceSync: true });
+    try {
+      const purchased = await RevenueCatService.presentPaywall();
+      if (purchased) {
+        toast.success(t('welcomeBack') || 'Assinatura confirmada!');
+        await checkSubscription({ forceSync: true });
+      } else {
+        // Only show if not on native? Actually, just log for now
+        console.log('Paywall closed or failed');
+      }
+    } catch (error) {
+      console.error('Paywall error:', error);
     }
     setLoading(false);
   };

@@ -40,9 +40,14 @@ export class RevenueCatService {
   static async presentPaywall(): Promise<boolean> {
     try {
       await this.initialize();
+      // On web/simulator, the plugin might not be available
+      if (typeof RevenueCatUI.presentPaywall !== 'function') {
+        console.warn('RevenueCat Paywall is only available on native platforms.');
+        return false;
+      }
       const result = await RevenueCatUI.presentPaywall();
       return result.result === PAYWALL_RESULT.PURCHASED || result.result === PAYWALL_RESULT.RESTORED;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error presenting paywall:', error);
       return false;
     }
