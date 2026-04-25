@@ -123,6 +123,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     'Grãos': 'Alimentos',
     'Padaria': 'Alimentos',
     'Doces': 'Alimentos',
+    'Restaurante': 'Restaurante',
   };
 
   const categoryTotals = filteredHistory.reduce<Record<string, number>>((acc, h) => {
@@ -171,7 +172,9 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
           <div className="bg-card rounded-xl border border-border p-4">
             <TrendingUp className="w-5 h-5 text-primary mb-2" />
             <p className="text-xl font-bold text-foreground">{fc(currentMonthTotal)}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('thisMonth')}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              {selectedMonth ? monthsData[selectedMonth]?.label : t('allMonths')}
+            </p>
           </div>
           <div className="bg-card rounded-xl border border-border p-4">
             <BarChart3 className="w-5 h-5 text-primary mb-2" />

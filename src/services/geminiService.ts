@@ -124,8 +124,8 @@ Analise a imagem e extraia os dados exatamente no seguinte formato JSON:
 REGRAS:
 1. "items" DEVE ser um array. Se não houver itens, retorne array vazio.
 2. "receipt_total" DEVE ser o valor final pago no cupom.
-3. Categorias: Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Outros.
+3. Categorias: Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Outros.
 4. Identifique itens duplicados e remova-os.
 5. Retorne APENAS o JSON válido, sem qualquer texto adicional antes ou depois.`;
 
-export const PRODUCT_PROMPT = `Você é um assistente de compras. Analise a imagem e identifique o nome do produto e sua categoria (Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Outros). Retorne apenas um JSON: { "product_name": "...", "category": "..." }`;
+export const PRODUCT_PROMPT = `Você é um assistente de compras. Analise a imagem e identifique o nome do produto e sua categoria (Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Outros). Retorne apenas um JSON: { "product_name": "...", "category": "..." }`;
