@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getHistory, saveHistory, getLists, saveLists } from '@/data/mockData';
-import { MapPin, ScanLine, Clock, Pencil, LocateFixed, AlertTriangle, Trash2, ListPlus, TrendingUp, TrendingDown, FileDown, FileUp } from 'lucide-react';
+import { MapPin, ScanLine, Clock, Pencil, LocateFixed, AlertTriangle, Trash2, ListPlus, TrendingUp, TrendingDown, FileDown, FileUp, Search, XCircle, RotateCcw, Check } from 'lucide-react';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -38,13 +38,56 @@ interface HistoryPageProps {
 
 export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterStore }: HistoryPageProps) {
   const { lang, currency, formatCurrency: fc, t } = useLanguage();
-  const [historyData, setHistoryData] = useState(() => {
-    const allHistory = getHistory();
-    return filterDate
-      ? allHistory.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore))
-      : allHistory;
-  });
-  const totalMonth = historyData.reduce((sum, h) => sum + h.total_price, 0);
+  const [historyData, setHistoryData] = useState(() => getHistory());
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredProduct, setFilteredProduct] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Filter history based on all criteria
+  const historyDisplay = useMemo(() => {
+    let data = [...historyData];
+    if (filterDate) {
+      data = data.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore));
+    }
+    if (filteredProduct) {
+      data = data.filter(h => h.product_name === filteredProduct);
+    } else if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      data = data.filter(h => h.product_name.toLowerCase().includes(q));
+    }
+    return data;
+  }, [historyData, filterDate, filterStore, filteredProduct, searchQuery]);
+
+  // Current Month Total (Top Banner) - Should be for the real current month
+  const currentMonthTotal = useMemo(() => {
+    const now = new Date().toISOString().slice(0, 7);
+    return historyData
+      .filter(h => h.purchase_date.startsWith(now))
+      .reduce((sum, h) => sum + h.total_price, 0);
+  }, [historyData]);
+
+  // Totals per month for the list banners
+  const monthSums = useMemo(() => {
+    const sums: Record<string, number> = {};
+    historyDisplay.forEach(h => {
+      const month = h.purchase_date.slice(0, 7);
+      sums[month] = (sums[month] || 0) + h.total_price;
+    });
+    return sums;
+  }, [historyDisplay]);
+
+  // Product suggestions
+  const productSuggestions = useMemo(() => {
+    const names = new Set(getHistory().map(h => h.product_name));
+    return Array.from(names).sort();
+  }, []);
+
+  const filteredSuggestions = useMemo(() => {
+    if (!searchQuery) return [];
+    const q = searchQuery.toLowerCase();
+    return productSuggestions.filter(p => p.toLowerCase().includes(q)).slice(0, 5);
+  }, [searchQuery, productSuggestions]);
 
   // Pre-calculate price variations using all history
   const { itemVariations, groupVariations } = (() => {
@@ -103,7 +146,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     setHistoryData(prev => prev.filter(h => h.id !== itemId));
   };
 
-  const grouped = historyData.reduce<Record<string, typeof historyData>>((acc, h) => {
+  const grouped = historyDisplay.reduce<Record<string, typeof historyData>>((acc, h) => {
     const key = `${h.purchase_date}_${h.store_name}`;
     (acc[key] ||= []).push(h);
     return acc;
@@ -356,18 +399,107 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                 <FileDown className="w-4 h-4 mr-2 text-primary" /> {t('export') || 'Exportar'}
               </Button>
             </div>
+
+            {/* Search Field */}
+            <div className="relative pt-2 space-y-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                    if (filteredProduct) setFilteredProduct(null);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  placeholder={t('searchPlaceholder')}
+                  className="pl-9 pr-9 h-11 bg-card border-border focus:ring-primary/20"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilteredProduct(null);
+                      setShowSuggestions(false);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => {
+                    if (filteredSuggestions.length > 0 && !filteredProduct) {
+                      setFilteredProduct(filteredSuggestions[0]);
+                      setSearchQuery(filteredSuggestions[0]);
+                    } else if (searchQuery) {
+                      // Just trigger filter with the current query if it matches something
+                      const match = productSuggestions.find(p => p.toLowerCase() === searchQuery.toLowerCase());
+                      if (match) setFilteredProduct(match);
+                    }
+                    setShowSuggestions(false);
+                  }}
+                  className="flex-1 h-10 bg-primary text-primary-foreground font-bold"
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  {t('search')}
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setFilteredProduct(null);
+                    setShowSuggestions(false);
+                  }}
+                  className="flex-1 h-10 bg-card border-border text-muted-foreground"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  {t('reset')}
+                </Button>
+              </div>
+
+              {/* Suggestions dropdown */}
+              <AnimatePresence>
+                {showSuggestions && filteredSuggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute z-50 w-full mt-1 bg-card border border-border rounded-xl shadow-xl overflow-hidden"
+                  >
+                    {filteredSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        onClick={() => {
+                          setFilteredProduct(suggestion);
+                          setSearchQuery(suggestion);
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full px-4 py-3 text-left text-sm hover:bg-accent flex items-center justify-between group transition-colors"
+                      >
+                        <span className="font-medium text-foreground">{suggestion}</span>
+                        <Check className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         )}
 
         {/* Total */}
-        <div className="bg-accent/50 rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-accent/50 rounded-xl p-4 flex items-center justify-between border border-border">
           <div>
             <p className="text-xs font-semibold text-primary">{t('monthTotal')}</p>
             <p className="text-xs text-muted-foreground capitalize">
               {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'long', year: 'numeric' })}
             </p>
           </div>
-          <p className="text-2xl font-bold text-primary">{fc(totalMonth)}</p>
+          <p className="text-2xl font-bold text-primary">{fc(currentMonthTotal)}</p>
         </div>
 
         {/* Grouped by date + store */}
@@ -390,6 +522,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
               lastMonth = currentMonth;
 
               const monthLabel = new Date(`${currentMonth}-01T12:00`).toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'long', year: 'numeric' });
+              const monthSum = monthSums[currentMonth] || 0;
 
               return (
                 <div key={key} className="relative">
@@ -398,13 +531,21 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                     <motion.div 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="py-4 flex items-center gap-4"
+                      className="py-4"
                     >
-                      <div className="flex-1 h-px bg-gradient-to-r from-emerald-500 to-transparent" />
-                      <span className="text-[10px] uppercase tracking-[0.2em] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                        {monthLabel}
-                      </span>
-                      <div className="flex-1 h-px bg-gradient-to-l from-emerald-500 to-transparent" />
+                      <div className="flex items-center gap-4 mb-2">
+                        <div className="flex-1 h-px bg-gradient-to-r from-emerald-500 to-transparent" />
+                        <span className="text-[10px] uppercase tracking-[0.2em] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                          {monthLabel}
+                        </span>
+                        <div className="flex-1 h-px bg-gradient-to-l from-emerald-500 to-transparent" />
+                      </div>
+                      <div className="flex justify-center">
+                        <div className="bg-emerald-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg border border-emerald-500 flex items-center gap-2">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span>{t('monthTotal')}: {fc(monthSum)}</span>
+                        </div>
+                      </div>
                     </motion.div>
                   )}
 
