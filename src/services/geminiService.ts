@@ -48,6 +48,10 @@ export async function analyzeWithGemini(images: string[], prompt: string, provid
       properties: {
         store_name: { type: Type.STRING },
         store_address: { type: Type.STRING },
+        establishment_type: { 
+          type: Type.STRING, 
+          enum: ["supermarket", "restaurant", "transport"] 
+        },
         date: { type: Type.STRING },
         receipt_total: { type: Type.NUMBER },
         items: {
@@ -66,7 +70,7 @@ export async function analyzeWithGemini(images: string[], prompt: string, provid
           }
         }
       },
-      required: ["store_name", "date", "receipt_total", "items"]
+      required: ["store_name", "date", "receipt_total", "items", "establishment_type"]
     } : isProductPrompt ? {
       type: Type.OBJECT,
       properties: {
@@ -105,6 +109,7 @@ Analise a imagem e extraia os dados exatamente no seguinte formato JSON:
 {
   "store_name": "Nome da Loja",
   "store_address": "Endereço (opcional)",
+  "establishment_type": "supermarket | restaurant | transport",
   "date": "YYYY-MM-DD",
   "receipt_total": 0.00,
   "items": [
@@ -124,8 +129,13 @@ Analise a imagem e extraia os dados exatamente no seguinte formato JSON:
 REGRAS:
 1. "items" DEVE ser um array. Se não houver itens, retorne array vazio.
 2. "receipt_total" DEVE ser o valor final pago no cupom.
-3. Categorias: Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Outros.
-4. Identifique itens duplicados e remova-os.
-5. Retorne APENAS o JSON válido, sem qualquer texto adicional antes ou depois.`;
+3. Classifique o cupom em "establishment_type": 
+   - "restaurant": para bares, restaurantes, lanchonetes, padaria (se for consumo local), etc.
+   - "supermarket": para mercados, mercearias, hortifruti, etc.
+   - "transport": para postos de combustível, apps de transporte, pedágios, etc.
+4. Categorias de ITENS: Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Outros. 
+   - Se establishment_type for "restaurant", a categoria de TODOS os itens deve ser obrigatoriamente "Restaurante".
+5. Identifique itens duplicados e remova-os.
+6. Retorne APENAS o JSON válido, sem qualquer texto adicional antes ou depois.`;
 
 export const PRODUCT_PROMPT = `Você é um assistente de compras. Analise a imagem e identifique o nome do produto e sua categoria (Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Outros). Retorne apenas um JSON: { "product_name": "...", "category": "..." }`;

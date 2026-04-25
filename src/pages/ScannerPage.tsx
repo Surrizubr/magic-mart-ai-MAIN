@@ -29,6 +29,7 @@ interface ReceiptItem {
 interface AIReceiptResult {
   store_name: string;
   store_address?: string;
+  establishment_type: 'supermarket' | 'restaurant' | 'transport';
   date: string;
   items: ReceiptItem[];
   receipt_total: number;
@@ -266,6 +267,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
       const finalResult: AIReceiptResult = {
         store_name: resultData.store_name || initialStore || t('unknownMarket'),
         store_address: resultData.store_address,
+        establishment_type: resultData.establishment_type || 'supermarket',
         date: resultData.date || initialDate || new Date().toISOString().slice(0, 10),
         items,
         receipt_total: resultData.receipt_total || 0,
@@ -465,7 +467,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
       total_price: 0,
       discount_amount: 0,
       discounted_price: 0,
-      category: 'Outros',
+      category: result.establishment_type === 'restaurant' ? 'Restaurante' : 'Outros',
     };
     const newItems = [...result.items, newItem];
     const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
@@ -781,6 +783,37 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
             {result.store_address && (
               <p className="text-xs text-muted-foreground pl-6">{result.store_address}</p>
             )}
+
+            {/* General Classification */}
+            <div className="space-y-2 pt-1 border-t border-border/50">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('generalClassification')}</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'supermarket', label: t('supermarket'), icon: '🛒' },
+                  { id: 'restaurant', label: t('restaurant'), icon: '🍽️' },
+                  { id: 'transport', label: t('transport'), icon: '🚗' },
+                ].map((cls) => (
+                  <button
+                    key={cls.id}
+                    onClick={() => {
+                      const newItems = result.items.map(item => ({
+                        ...item,
+                        category: cls.id === 'restaurant' ? 'Restaurante' : item.category
+                      }));
+                      setResult({ ...result, establishment_type: cls.id as any, items: newItems });
+                    }}
+                    className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                      result.establishment_type === cls.id 
+                        ? 'border-primary bg-primary/5 text-primary' 
+                        : 'border-border bg-background text-muted-foreground hover:bg-secondary/50'
+                    }`}
+                  >
+                    <span className="text-lg mb-1">{cls.icon}</span>
+                    <span className="text-[10px] font-semibold text-center leading-tight">{cls.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Date */}
             <div className="bg-secondary/50 rounded-lg p-3 space-y-2">
