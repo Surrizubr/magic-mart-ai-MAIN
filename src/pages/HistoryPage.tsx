@@ -269,9 +269,10 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = (range?: { start: string; end: string }) => {
+    const r = range || exportRange;
     const all = getHistory();
-    const filtered = all.filter(h => h.purchase_date >= exportRange.start && h.purchase_date <= exportRange.end);
+    const filtered = all.filter(h => h.purchase_date >= r.start && h.purchase_date <= r.end);
     
     if (filtered.length === 0) {
       toast.error(t('noDataFound'));
@@ -296,13 +297,27 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `magic-mart-historico-${exportRange.start}-a-${exportRange.end}.csv`);
+    link.setAttribute('download', `magic-mart-historico-${r.start}-a-${r.end}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     setShowExportModal(false);
     toast.success(`${filtered.length} ${t('exportSuccess')}`);
+  };
+
+  const handleExportAll = () => {
+    const all = getHistory();
+    if (all.length === 0) {
+      toast.error(t('noDataFound'));
+      return;
+    }
+    const dates = all.map(h => h.purchase_date).sort();
+    const start = dates[0];
+    const end = dates[dates.length - 1];
+    const newRange = { start, end };
+    setExportRange(newRange);
+    handleExportCSV(newRange);
   };
 
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -766,6 +781,13 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                 onChange={(e) => setExportRange(prev => ({ ...prev, end: e.target.value }))}
                 className="text-sm"
               />
+              <Button 
+                variant="link" 
+                className="text-xs text-primary p-0 h-auto font-bold"
+                onClick={handleExportAll}
+              >
+                {t('exportAll')}
+              </Button>
             </div>
             <div className="bg-primary/5 p-3 rounded-lg border border-primary/10">
               <p className="text-[10px] text-primary leading-tight">

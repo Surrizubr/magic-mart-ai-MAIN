@@ -457,6 +457,7 @@ const translations: Record<string, Record<Lang, string>> = {
   addImportedToStockQuestion: { pt: 'Deseja adicionar os itens importados ao estoque?', en: 'Do you want to add the imported items to stock?', es: '¿Deseas añadir los artículos importados al stock?' },
   addImportedToStockTitle: { pt: 'Atualizar Estoque', en: 'Update Stock', es: 'Actualizar Stock' },
   exportHistoryTitle: { pt: 'Exportar Histórico (CSV)', en: 'Export History (CSV)', es: 'Exportar Historial (CSV)' },
+  exportAll: { pt: 'Exportar tudo', en: 'Export all', es: 'Exportar todo' },
   startDate: { pt: 'Data de Início', en: 'Start Date', es: 'Fecha de Inicio' },
   endDate: { pt: 'Data de Fim', en: 'End Date', es: 'Fecha de Fin' },
   exportHint: { pt: 'O arquivo exportado pode ser aberto no Excel, Google Sheets ou importado de volta.', en: 'The exported file can be opened in Excel, Google Sheets or imported back.', es: 'El archivo exportado se puede abrir en Excel, Google Sheets o importar de nuevo.' },
