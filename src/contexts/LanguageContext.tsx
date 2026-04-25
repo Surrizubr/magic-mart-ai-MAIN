@@ -428,6 +428,8 @@ const translations: Record<string, Record<Lang, string>> = {
   restaurant: { pt: 'Restaurante', en: 'Restaurant', es: 'Restaurante' },
   transport: { pt: 'Transporte', en: 'Transport', es: 'Transporte' },
   maintenance: { pt: 'Manutenção', en: 'Maintenance', es: 'Mantenimiento' },
+  transportMonthly: { pt: 'Gastos Mensais com Transporte', en: 'Monthly Transport Expenses', es: 'Gastos Mensuales con Transporte' },
+  maintenanceYearly: { pt: 'Gastos Anuais com Manutenção', en: 'Yearly Maintenance Expenses', es: 'Gastos Anuales con Mantenimiento' },
   wherePurchased: { pt: 'Informe onde você fez as compras:', en: 'Enter where you made the purchases:', es: 'Informa dónde hiciste las compras:' },
   storePlaceholder: { pt: 'Ex: Supermercado Extra', en: 'e.g. Supermarket', es: 'Ej: Supermercado' },
   gettingAddress: { pt: 'Obtendo endereço...', en: 'Getting address...', es: 'Obteniendo dirección...' },

@@ -323,6 +323,73 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             </div>
           </div>
         )}
+
+        {/* Monthly Transport Expenses */}
+        {(() => {
+          const transportByMonth = history.reduce<Record<string, { label: string, total: number }>>((acc, h) => {
+            if (h.category !== 'Transporte') return acc;
+            const d = new Date(h.purchase_date);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!acc[key]) {
+              acc[key] = {
+                label: d.toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'short', year: 'numeric' }).replace('.', ''),
+                total: 0
+              };
+            }
+            acc[key].total += h.total_price;
+            return acc;
+          }, {});
+
+          const data = Object.entries(transportByMonth)
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([key, val]) => ({ month: val.label, value: val.total }));
+
+          if (data.length === 0) return null;
+
+          return (
+            <div className="bg-card rounded-xl border border-border p-4">
+              <h3 className="text-sm font-bold text-foreground mb-4">{t('transportMonthly')}</h3>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={data}>
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => fc(v)} />
+                  <Tooltip formatter={(v: number) => [fc(v), t('spending')]} cursor={{ fill: 'transparent' }} />
+                  <Bar dataKey="value" fill="hsl(210, 70%, 50%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          );
+        })()}
+
+        {/* Yearly Maintenance Expenses */}
+        {(() => {
+          const maintenanceByYear = history.reduce<Record<string, number>>((acc, h) => {
+            if (h.category !== 'Manutenção') return acc;
+            const year = new Date(h.purchase_date).getFullYear().toString();
+            acc[year] = (acc[year] || 0) + h.total_price;
+            return acc;
+          }, {});
+
+          const data = Object.entries(maintenanceByYear)
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([year, total]) => ({ year, value: total }));
+
+          if (data.length === 0) return null;
+
+          return (
+            <div className="bg-card rounded-xl border border-border p-4">
+              <h3 className="text-sm font-bold text-foreground mb-4">{t('maintenanceYearly')}</h3>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={data}>
+                  <XAxis dataKey="year" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => fc(v)} />
+                  <Tooltip formatter={(v: number) => [fc(v), t('spending')]} cursor={{ fill: 'transparent' }} />
+                  <Bar dataKey="value" fill="hsl(25, 80%, 55%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          );
+        })()}
       </motion.div>
 
       {/* Visits Dialog */}
