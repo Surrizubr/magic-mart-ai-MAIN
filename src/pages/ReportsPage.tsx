@@ -349,11 +349,11 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
           return (
             <div className="bg-card rounded-xl border border-border p-4">
               <h3 className="text-sm font-bold text-foreground mb-4">{t('transportMonthly')}</h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {data.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center pb-2 border-b border-border/30 last:border-0 last:pb-0">
-                    <span className="text-sm text-muted-foreground capitalize">{item.month}</span>
-                    <span className="text-sm font-bold text-foreground">{fc(item.value)}</span>
+                  <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50/30 rounded-xl border border-emerald-100/50">
+                    <span className="text-sm font-semibold text-foreground capitalize">{item.month}</span>
+                    <span className="text-sm font-bold text-primary">{fc(item.value)}</span>
                   </div>
                 ))}
               </div>
@@ -379,11 +379,11 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
           return (
             <div className="bg-card rounded-xl border border-border p-4">
               <h3 className="text-sm font-bold text-foreground mb-4">{t('maintenanceYearly')}</h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {data.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center pb-2 border-b border-border/30 last:border-0 last:pb-0">
-                    <span className="text-sm text-muted-foreground">{item.year}</span>
-                    <span className="text-sm font-bold text-foreground">{fc(item.value)}</span>
+                  <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50/30 rounded-xl border border-emerald-100/50">
+                    <span className="text-sm font-semibold text-foreground">{item.year}</span>
+                    <span className="text-sm font-bold text-primary">{fc(item.value)}</span>
                   </div>
                 ))}
               </div>
