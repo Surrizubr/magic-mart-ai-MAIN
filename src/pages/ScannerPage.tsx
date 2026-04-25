@@ -138,27 +138,59 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
 
   const processImages = async (imgs: string[]) => {
     setStep('processing');
-    setProgressPercent(10);
-    setProgressMsg(t('optimizeImages'));
     setError(null);
+    setProgressPercent(0);
 
     try {
-      const compressedImgs = await Promise.all(imgs.map(img => compressImage(img)));
-      
-      setProgressPercent(20);
-      setProgressMsg(t('sendingImages'));
+      // Step 1: Checando comunicação com servidor
+      setProgressMsg(t('aiStep1'));
+      setProgressPercent(5);
+      await new Promise(r => setTimeout(r, 600));
 
+      // Step 2: Validando chave API
+      setProgressMsg(t('aiStep2'));
+      setProgressPercent(15);
       const geminiApiKey = localStorage.getItem('gemini-api-key') || '';
       if (!geminiApiKey) {
         setStep('capture');
         setError('API_KEY_ERROR');
         return;
       }
+      await new Promise(r => setTimeout(r, 600));
 
-      const resultData = await analyzeWithGemini(compressedImgs, RECEIPT_PROMPT, geminiApiKey);
+      // Step 3: Comprimindo e enviando foto
+      setProgressMsg(t('aiStep3'));
+      setProgressPercent(25);
+      const compressedImgs = await Promise.all(imgs.map(img => compressImage(img)));
+      setProgressPercent(35);
 
-      setProgressPercent(70);
-      setProgressMsg(t('processingResponse'));
+      // Start AI Analysis (this is the long one)
+      // We'll simulate progress while waiting
+      const aiPromise = analyzeWithGemini(compressedImgs, RECEIPT_PROMPT, geminiApiKey);
+      
+      // Progress simulation for AI analysis (steps 4, 5, 6)
+      const aiStartTime = Date.now();
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - aiStartTime;
+        if (elapsed < 3000) {
+          setProgressMsg(t('aiStep4'));
+          setProgressPercent(Math.round(Math.min(45, 35 + (elapsed / 300))));
+        } else if (elapsed < 7000) {
+          setProgressMsg(t('aiStep5'));
+          setProgressPercent(Math.round(Math.min(65, 45 + (elapsed - 3000) / 200)));
+        } else {
+          setProgressMsg(t('aiStep6'));
+          setProgressPercent(Math.round(Math.min(85, 65 + (elapsed - 7000) / 400)));
+        }
+      }, 500);
+
+      const resultData = await aiPromise;
+      clearInterval(interval);
+
+      // Step 7: Consolidando valores
+      setProgressMsg(t('aiStep7'));
+      setProgressPercent(95);
+      await new Promise(r => setTimeout(r, 800));
 
       const items: ReceiptItem[] = (resultData.items || []).map((item: any, i: number) => {
         const product_name = item.product_name || item.name || t('unnamedProduct');
