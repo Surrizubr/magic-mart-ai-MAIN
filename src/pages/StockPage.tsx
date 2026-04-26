@@ -13,6 +13,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { AddStockItemDialog, AddStockItemResult } from '@/components/AddStockItemDialog';
 import { PurchaseHistory } from '@/types';
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 type StatusFilter = 'all' | 'critical' | 'low' | 'ok';
 
 const statusConfig: Record<string, { label: string; dot: string; class: string }> = {
@@ -40,6 +42,12 @@ const categoryIcons: Record<string, { icon: string; key: string }> = {
   'Outros': { icon: '📦', key: 'others' },
 };
 
+const categories = [
+  'Laticínios', 'Grãos', 'Bebidas', 'Temperos', 'Limpeza',
+  'Carnes', 'Frutas', 'Alimentos', 'Higiene', 'Hortifruti', 'Padaria',
+  'Restaurante', 'Manutenção', 'Transporte', 'Outros',
+];
+
 interface StockPageProps {
   onBack?: () => void;
 }
@@ -56,6 +64,7 @@ export function StockPage({ onBack }: StockPageProps) {
   });
   const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
   const [editingQtyValue, setEditingQtyValue] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const handleAddItem = (item: AddStockItemResult) => {
@@ -101,6 +110,12 @@ export function StockPage({ onBack }: StockPageProps) {
     if (filter !== 'all' && s.status !== filter) return false;
     return true;
   });
+
+  const handleUpdateCategory = (itemId: string, newCategory: string) => {
+    setStock(prev => prev.map(s => s.id === itemId ? { ...s, category: newCategory } : s));
+    setEditingCategoryId(null);
+    toast.success(t('categoryUpdated'));
+  };
 
   const updateQty = (id: string, delta: number) => {
     setStock(prev => prev.map(s => s.id === id ? { ...s, quantity: Math.max(0, s.quantity + delta) } : s));
@@ -202,9 +217,29 @@ export function StockPage({ onBack }: StockPageProps) {
                         </button>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent text-accent-foreground flex items-center gap-1`}>
-                          {categoryIcons[s.category]?.icon || '🛒'} {t(categoryIcons[s.category]?.key || s.category)}
-                        </span>
+                        {editingCategoryId === s.id ? (
+                          <Select 
+                            defaultValue={s.category} 
+                            onValueChange={(val) => handleUpdateCategory(s.id, val)}
+                            onOpenChange={(open) => { if (!open) setEditingCategoryId(null); }}
+                          >
+                            <SelectTrigger className="h-7 text-[10px] py-0 px-2 min-w-[100px] border-primary/30">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map(c => (
+                                <SelectItem key={c} value={c} className="text-[11px]">{t(c)}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span 
+                            onClick={() => setEditingCategoryId(s.id)}
+                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent text-accent-foreground flex items-center gap-1 cursor-pointer hover:ring-1 ring-primary/20 transition-all`}
+                          >
+                            {categoryIcons[s.category]?.icon || '🛒'} {t(categoryIcons[s.category]?.key || s.category)}
+                          </span>
+                        )}
                         <span className="text-xs text-muted-foreground">{s.quantity.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { maximumFractionDigits: 3 })} {t(s.unit)}</span>
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-1">

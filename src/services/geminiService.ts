@@ -138,6 +138,7 @@ REGRAS:
 4. Categorias de ITENS: Frutas, Verduras, Carnes, Laticínios, Padaria, Bebidas, Limpeza, Higiene, Grãos, Temperos, Restaurante, Manutenção, Outros. 
    - Se establishment_type for "restaurant", a categoria de TODOS os itens deve ser obrigatoriamente "Restaurante".
    - Se establishment_type for "maintenance", a categoria de TODOS os itens deve ser obrigatoriamente "Manutenção".
+   - Se establishment_type for "transport", a categoria de TODOS os itens deve ser obrigatoriamente "Transporte".
 5. Identifique itens duplicados e remova-os.
 6. Retorne APENAS o JSON válido, sem qualquer texto adicional antes ou depois.`;
 

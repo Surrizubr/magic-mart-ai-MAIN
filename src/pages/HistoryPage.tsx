@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PermissionGate } from '@/components/PermissionGate';
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 const categoryColors: Record<string, string> = {
   'Grãos': 'bg-accent text-accent-foreground',
   'Laticínios': 'bg-accent text-accent-foreground',
@@ -26,13 +28,22 @@ const categoryColors: Record<string, string> = {
   'Hortifruti': 'bg-green-50 text-green-700',
   'Restaurante': 'bg-amber-50 text-amber-700',
   'Manutenção': 'bg-slate-50 text-slate-700',
+  'Transporte': 'bg-slate-50 text-slate-700',
+  'Outros': 'bg-slate-50 text-slate-700',
 };
 
 const categoryIcons: Record<string, string> = {
   'Padaria': '🍞', 'Alimentos': '🛒', 'Higiene': '♥', 'Limpeza': '✨',
   'Bebidas': '🥤', 'Grãos': '🛒', 'Laticínios': '🧀', 'Carnes': '🥩',
   'Frutas': '🍎', 'Hortifruti': '🥬', 'Restaurante': '🍽️', 'Manutenção': '🛠️',
+  'Transporte': '🚗', 'Outros': '📦',
 };
+
+const categories = [
+  'Laticínios', 'Grãos', 'Bebidas', 'Temperos', 'Limpeza',
+  'Carnes', 'Frutas', 'Alimentos', 'Higiene', 'Hortifruti', 'Padaria',
+  'Restaurante', 'Manutenção', 'Transporte', 'Outros',
+];
 
 interface HistoryPageProps {
   onNavigateToScanner?: (ctx?: { date: string; store: string }) => void;
@@ -146,7 +157,16 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     end: new Date().toISOString().slice(0, 10) 
   });
 
-  const [pendingImportItems, setPendingImportItems] = useState<any[] | null>(null);
+  const [editingItemCategoryId, setEditingItemCategoryId] = useState<string | null>(null);
+
+  const handleUpdateCategory = (itemId: string, newCategory: string) => {
+    const allHistory = getHistory();
+    const updated = allHistory.map(h => h.id === itemId ? { ...h, category: newCategory } : h);
+    saveHistory(updated);
+    setHistoryData(prev => prev.map(h => h.id === itemId ? { ...h, category: newCategory } : h));
+    setEditingItemCategoryId(null);
+    toast.success(t('categoryUpdated'));
+  };
 
   const handleDeleteItem = (itemId: string) => {
     const allHistory = getHistory();
@@ -699,12 +719,32 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                             rightBg="bg-primary"
                           >
                             <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0 bg-background">
-                              <div>
+                              <div className="flex-1 min-w-0 pr-4">
                                 <p className="text-sm font-medium text-foreground">{item.product_name}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
-                                    {catIcon} {t(item.category)}
-                                  </span>
+                                  {editingItemCategoryId === item.id ? (
+                                    <Select 
+                                      defaultValue={item.category} 
+                                      onValueChange={(val) => handleUpdateCategory(item.id, val)}
+                                      onOpenChange={(open) => { if (!open) setEditingItemCategoryId(null); }}
+                                    >
+                                      <SelectTrigger className="h-7 text-[10px] py-0 px-2 min-w-[100px] border-primary/30">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {categories.map(c => (
+                                          <SelectItem key={c} value={c} className="text-[11px]">{t(c)}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <span 
+                                      onClick={() => setEditingItemCategoryId(item.id)}
+                                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1 cursor-pointer hover:ring-1 ring-primary/20 transition-all`}
+                                    >
+                                      {catIcon} {t(item.category)}
+                                    </span>
+                                  )}
                                   <span className="text-xs text-muted-foreground">{item.quantity} {t('un')}</span>
                                 </div>
                               </div>

@@ -469,7 +469,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
       total_price: 0,
       discount_amount: 0,
       discounted_price: 0,
-      category: result.establishment_type === 'restaurant' ? 'Restaurante' : (result.establishment_type === 'maintenance' ? 'Manutenção' : 'Outros'),
+      category: result.establishment_type === 'restaurant' ? 'Restaurante' : (result.establishment_type === 'maintenance' ? 'Manutenção' : (result.establishment_type === 'transport' ? 'Transporte' : 'Outros')),
     };
     const newItems = [...result.items, newItem];
     const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
@@ -799,10 +799,17 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
                   <button
                     key={cls.id}
                     onClick={() => {
-                      const newItems = result.items.map(item => ({
-                        ...item,
-                        category: cls.id === 'restaurant' ? 'Restaurante' : (cls.id === 'maintenance' ? 'Manutenção' : item.category)
-                      }));
+                      const newItems = result.items.map(item => {
+                        let newCategory = item.category;
+                        if (cls.id === 'restaurant') newCategory = 'Restaurante';
+                        else if (cls.id === 'maintenance') newCategory = 'Manutenção';
+                        else if (cls.id === 'transport') newCategory = 'Transporte';
+                        
+                        return {
+                          ...item,
+                          category: newCategory
+                        };
+                      });
                       setResult({ ...result, establishment_type: cls.id as any, items: newItems });
                     }}
                     className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
