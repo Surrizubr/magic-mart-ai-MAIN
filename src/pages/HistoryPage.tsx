@@ -182,11 +182,32 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     setHistoryData(prev => prev.filter(h => h.id !== itemId));
   };
 
-  const grouped = historyDisplay.reduce<Record<string, typeof historyData>>((acc, h) => {
-    const key = `${h.purchase_date}_${h.store_name}`;
-    (acc[key] ||= []).push(h);
-    return acc;
-  }, {});
+  // Group by date + store + receipt_id (to keep coupons separate)
+  const groupedSorted = useMemo(() => {
+    const groups = historyDisplay.reduce<Record<string, typeof historyData>>((acc, h) => {
+      // Each scan (receipt_id) is a separate group. Manual entries on same date/store are grouped as 'manual'.
+      const groupKey = h.receipt_id ? `${h.purchase_date}_${h.store_name}_${h.receipt_id}` : `${h.purchase_date}_${h.store_name}_manual`;
+      (acc[groupKey] ||= []).push(h);
+      return acc;
+    }, {});
+
+    return Object.entries(groups).sort(([keyA, itemsA], [keyB, itemsB]) => {
+      const [dateA] = keyA.split('_');
+      const [dateB] = keyB.split('_');
+      
+      // 1. Sort by purchase date (most recent first)
+      if (dateB !== dateA) {
+        return dateB.localeCompare(dateA);
+      }
+      
+      // 2. Sort by "last scanned/added"
+      // Use the max ID (which contains timestamp) in each group to determine latest addition
+      const maxIdA = itemsA.reduce((max, item) => item.id > max ? item.id : max, '');
+      const maxIdB = itemsB.reduce((max, item) => item.id > max ? item.id : max, '');
+      
+      return maxIdB.localeCompare(maxIdA);
+    });
+  }, [historyDisplay]);
 
   const handleEditAddress = (store: string, date: string) => {
     setEditingStore({ store, date });
@@ -299,7 +320,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
         part.charAt(0).toUpperCase() + part.slice(1)
       ).join('-');
       
-      if (lang === 'pt-BR' || lang === 'es-ES') {
+      if (lang === 'pt' || lang === 'es') {
         return `${day} de ${monthCap} (${weekdayCap})`;
       }
       return `${monthCap} ${day} (${weekdayCap})`;
@@ -614,15 +635,9 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
         {(() => {
           let lastMonth = '';
           
-          return Object.entries(grouped)
-            .sort(([keyA], [keyB]) => {
-              const [dateA] = keyA.split('_');
-              const [dateB] = keyB.split('_');
-              return dateB.localeCompare(dateA);
-            })
-            .map(([key, storeItems], index, arr) => {
-              const [date, store] = key.split('_');
-              const storeTotal = storeItems.reduce((s, i) => s + i.total_price, 0);
+          return groupedSorted.map(([key, storeItems], index) => {
+            const [date, store] = key.split('_');
+            const storeTotal = storeItems.reduce((s, i) => s + i.total_price, 0);
               
               // Month detection (ex: 2026-04)
               const currentMonth = date.slice(0, 7);

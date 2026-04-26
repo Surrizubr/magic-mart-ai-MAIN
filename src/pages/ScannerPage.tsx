@@ -954,17 +954,33 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
 
             {/* Date */}
             <div className="bg-secondary/50 rounded-lg p-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-foreground">{t('purchaseDateLabel')}</span>
-                {result.date === new Date().toISOString().slice(0, 10) ? (
-                  <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">
-                    {t('dateNotFound')}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-foreground">{t('purchaseDateLabel')}</span>
+                  {result.date === new Date().toISOString().slice(0, 10) ? (
+                    <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">
+                      {t('dateNotFound')}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-medium">
+                      {t('extractedFromReceipt')}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-xs font-bold text-primary">
+                    {new Date(result.date + 'T12:00:00').toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR')}
                   </span>
-                ) : (
-                  <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-medium">
-                    {t('extractedFromReceipt')}
-                  </span>
-                )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setResult({ ...result, date: new Date().toISOString().slice(0, 10) })}
+                    className="h-6 px-2 text-[10px] font-bold text-primary hover:bg-primary/10"
+                  >
+                    <Calendar className="w-3 h-3 mr-1" />
+                    {t('today')}
+                  </Button>
+                </div>
               </div>
               <input
                 type="date"
@@ -1016,7 +1032,11 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
 
           {/* Top action buttons */}
           {!saved && result.items.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('itemsCount')}</span>
+                <span className="text-sm font-bold text-foreground">{result.items.length}</span>
+              </div>
               <Button
                 onClick={handleSave}
                 className="w-full gradient-primary text-primary-foreground border-0 h-11"
@@ -1213,6 +1233,12 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
 
           {/* Actions */}
           <div className="space-y-2 pt-2">
+            {!saved && result.items.length > 0 && (
+              <div className="flex items-center justify-between px-1 mb-1">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('itemsCount')}</span>
+                <span className="text-sm font-bold text-foreground">{result.items.length}</span>
+              </div>
+            )}
             {!saved ? (
               <Button
                 onClick={handleSave}
