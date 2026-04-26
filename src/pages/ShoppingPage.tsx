@@ -120,38 +120,59 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
   const executeGeoLocation = () => {
     setShowLocationGate(false);
     setGeoLoading(true);
+    console.log("Starting geolocation in ShoppingPage...");
+
+    if (!navigator.geolocation) {
+      toast.error(t('locationError'));
+      setGeoLoading(false);
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
+          console.log("Coords obtained in ShoppingPage:", pos.coords.latitude, pos.coords.longitude);
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
             { headers: { 'Accept-Language': 'pt-BR' } }
           );
+          if (!res.ok) throw new Error("API reverse geocoding failed");
+          
           const data = await res.json();
           const addr = data.address || {};
           const road = addr.road || addr.pedestrian || addr.street || '';
           const number = addr.house_number || '';
           const shop = addr.shop || addr.supermarket || addr.building || addr.commercial || '';
+          
           let name = '';
           if (shop) name = shop + ' - ';
           name += road;
           if (number) name += ', ' + number;
+          
           if (!name.trim()) name = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+          
           setStoreName(name.trim());
           setStoreSet(true);
           toast.success(t('locationObtained'));
-        } catch {
+        } catch (err) {
+          console.error("OSM Error in ShoppingPage:", err);
           setStoreName(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
           setStoreSet(true);
           toast.info(t('coordsSaved'));
         }
         setGeoLoading(false);
       },
-      () => {
+      (err) => {
+        console.error("Geolocation error callback in ShoppingPage:", err);
         setGeoLoading(false);
-        toast.error(t('locationError'));
+        const messages: Record<number, string> = {
+          1: t('permissionDenied') || "Permissão negada.",
+          2: t('locationError') || "Localização indisponível.",
+          3: t('locationError') || "Tempo de busca excedido."
+        };
+        toast.error(messages[err.code] || t('locationError'));
       },
-      { timeout: 10000 }
+      { timeout: 10000, enableHighAccuracy: false }
     );
   };
 

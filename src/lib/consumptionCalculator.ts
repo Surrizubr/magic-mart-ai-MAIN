@@ -87,15 +87,21 @@ export function recalculateStockRates(stock: any[], history: PurchaseHistory[]):
 }
 
 /**
- * Legacy wrapper for compatibility.
- * Considers localStorage as source and target.
+ * Recalculates all consumption rates and updates localStorage.
+ * Returns the updated stock items for sync purposes.
  */
-export function recalculateAllConsumptionRates(): void {
-  const stock = JSON.parse(localStorage.getItem('stock_items') || '[]');
-  const history: PurchaseHistory[] = JSON.parse(localStorage.getItem('purchase_history') || '[]');
-  
-  if (stock.length === 0) return;
+export function recalculateAllConsumptionRates(): any[] | null {
+  try {
+    const stock = JSON.parse(localStorage.getItem('stock_items') || '[]');
+    const history: PurchaseHistory[] = JSON.parse(localStorage.getItem('purchase_history') || '[]');
+    
+    if (stock.length === 0) return null;
 
-  const updatedStock = recalculateStockRates(stock, history);
-  localStorage.setItem('stock_items', JSON.stringify(updatedStock));
+    const updatedStock = recalculateStockRates(stock, history);
+    localStorage.setItem('stock_items', JSON.stringify(updatedStock));
+    return updatedStock;
+  } catch (err) {
+    console.error('Error recalculating consumption rates:', err);
+    return null;
+  }
 }

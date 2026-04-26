@@ -316,16 +316,19 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
   const handleSave = () => {
     if (!result) return;
     
+    console.log("handleSave triggered. Current date:", result.date);
+    
     // Validate date
     if (!result.date || result.date.trim() === '' || isNaN(new Date(result.date + 'T12:00:00').getTime())) {
-      // If date is missing or invalid, default to today
-      setResult({ ...result, date: new Date().toISOString().slice(0, 10) });
+      const today = new Date().toISOString().slice(0, 10);
+      console.log("Setting default today date:", today);
+      setResult(prev => prev ? { ...prev, date: today } : null);
     }
     
     setShowDateConfirm(true);
   };
 
-  const performSave = () => {
+  const performSave = async () => {
     if (!result) return;
     
     try {
@@ -355,7 +358,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
             stockItem.quantity = Math.max(0, stockItem.quantity - oldItem.quantity);
           }
         });
-        saveStock(stock);
+        await saveStock(stock);
 
         history = history.filter(h => !(h.purchase_date === initialDate && h.store_name === initialStore));
       }
@@ -377,40 +380,45 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
           receipt_id: receiptId,
         });
       });
-      saveHistory(history);
+      await saveHistory(history);
 
-      // Save to stock_items
-      if (result.establishment_type === 'supermarket') {
-        const existingStock: any[] = getStock();
-        result.items.forEach(item => {
-          const existing = existingStock.find(s => s.product_name.toLowerCase() === item.product_name.toLowerCase());
-          if (existing) {
-            existing.quantity += item.quantity;
-          } else {
-            existingStock.push({
-              id: `stock_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-              product_name: item.product_name,
-              category: item.category,
-              quantity: item.quantity,
-              unit: item.unit,
-              min_quantity: 1,
-              daily_consumption_rate: 0.1,
-              status: 'ok',
-              last_price: item.discount_amount > 0 ? item.discounted_price / item.quantity : item.unit_price,
-              receipt_id: receiptId,
-            });
-          }
-        });
-        saveStock(existingStock);
-      }
+      // Save to stock_items - always save to stock if establishment_type is NOT restaurant/transport/maintenance or if specifically allowed
+      // The user clicked "Save to Stock and History" so we should honor that.
+      const existingStock: any[] = getStock();
+      result.items.forEach(item => {
+        const existing = existingStock.find(s => s.product_name.toLowerCase() === item.product_name.toLowerCase());
+        if (existing) {
+          existing.quantity += item.quantity;
+          existing.last_price = item.discount_amount > 0 ? item.discounted_price / item.quantity : item.unit_price;
+          existing.last_purchase_date = result.date;
+        } else {
+          existingStock.push({
+            id: `stock_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+            product_name: item.product_name,
+            category: item.category,
+            quantity: item.quantity,
+            unit: item.unit,
+            min_quantity: 1,
+            daily_consumption_rate: 0.1,
+            status: 'ok',
+            last_price: item.discount_amount > 0 ? item.discounted_price / item.quantity : item.unit_price,
+            last_purchase_date: result.date,
+            receipt_id: receiptId,
+          });
+        }
+      });
+      await saveStock(existingStock);
 
       // Recalculate consumption rates based on purchase history
-      recalculateAllConsumptionRates();
+      const updatedStock = recalculateAllConsumptionRates();
+      if (updatedStock) {
+        await saveStock(updatedStock);
+      }
 
       setSaved(true);
       toast.success(t('saveSuccessful'));
     } catch (err: any) {
-      console.error('Error in handleSave:', err);
+      console.error('Error in performSave:', err);
       toast.error('Ocorreu um erro ao salvar o recibo.');
     }
   };
@@ -458,36 +466,57 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
     if (!result) return;
     
     setGeoLoading(true);
+    console.log("Starting geolocation...");
+    
+    if (!navigator.geolocation) {
+      toast.error(t('locationError'));
+      setGeoLoading(false);
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
+          console.log("Coords obtained:", pos.coords.latitude, pos.coords.longitude);
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
             { headers: { 'Accept-Language': lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es-ES' : 'en-US' } }
           );
+          if (!res.ok) throw new Error("API reverse geocoding failed");
+          
           const data = await res.json();
           const addr = data.address || {};
           const road = addr.road || addr.pedestrian || addr.street || '';
           const number = addr.house_number || '';
           const shop = addr.shop || addr.supermarket || addr.building || addr.commercial || '';
+          
           let name = '';
           if (shop) name = shop + ' - ';
           name += road;
           if (number) name += ', ' + number;
+          
           if (!name.trim()) name = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+          
           setResult({ ...result, store_name: name.trim() });
           toast.success(t('locationObtained'));
-        } catch {
+        } catch (err) {
+          console.error("OSM Error:", err);
           setResult({ ...result, store_name: `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}` });
           toast.info(t('coordsSaved'));
         }
         setGeoLoading(false);
       },
-      () => {
+      (err) => {
+        console.error("Geolocation error callback:", err);
         setGeoLoading(false);
-        toast.error(t('locationError'));
+        const messages: Record<number, string> = {
+          1: t('permissionDenied') || "Permissão de localização negada.",
+          2: t('locationError') || "Localização indisponível.",
+          3: t('locationError') || "Tempo de busca excedido."
+        };
+        toast.error(messages[err.code] || t('locationError'));
       },
-      { timeout: 10000 }
+      { timeout: 10000, enableHighAccuracy: false }
     );
   };
 
