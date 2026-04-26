@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AddStockItemDialog, AddStockItemResult } from '@/components/AddStockItemDialog';
 import { PurchaseHistory } from '@/types';
+import { saveProductMapping } from '@/lib/categoryMappings';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -112,6 +113,10 @@ export function StockPage({ onBack }: StockPageProps) {
   });
 
   const handleUpdateCategory = (itemId: string, newCategory: string) => {
+    const item = stock.find(s => s.id === itemId);
+    if (item) {
+      saveProductMapping(item.name, newCategory);
+    }
     setStock(prev => prev.map(s => s.id === itemId ? { ...s, category: newCategory } : s));
     setEditingCategoryId(null);
     toast.success(t('categoryUpdated'));

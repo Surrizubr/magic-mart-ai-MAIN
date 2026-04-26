@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { StockItem } from '@/types';
+import { getCategoryForProduct, saveProductMapping } from '@/lib/categoryMappings';
+import { useEffect } from 'react';
 
 const categories = [
   'Laticínios', 'Grãos', 'Bebidas', 'Temperos', 'Limpeza',
@@ -33,8 +35,21 @@ export function AddStockItemDialog({ open, onOpenChange, onAdd }: AddStockItemDi
   const [minQuantity, setMinQuantity] = useState('1');
   const [price, setPrice] = useState('');
 
+  useEffect(() => {
+    if (name.trim()) {
+      const suggested = getCategoryForProduct(name.trim());
+      if (suggested) {
+        setCategory(suggested);
+      }
+    }
+  }, [name]);
+
   const handleAdd = () => {
     if (!name.trim()) return;
+    
+    // Save mapping when manually adding/editing
+    saveProductMapping(name.trim(), category);
+    
     const totalPrice = Math.max(0, Number(price) || 0);
     const qty = Math.max(0, Number(quantity) || 1);
     const unitPrice = qty > 0 ? totalPrice / qty : totalPrice;

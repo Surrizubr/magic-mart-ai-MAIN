@@ -10,6 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useSubscriptionContext } from '@/contexts/SubscriptionContext';
 import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 import { getHistory, saveHistory, getStock, saveStock } from '@/data/mockData';
+import { getCategoryForProduct } from '@/lib/categoryMappings';
 
 type ScanMode = 'choose' | 'single' | 'multi' | 'history';
 type ScanStep = 'capture' | 'processing' | 'results';
@@ -231,6 +232,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
         const unit_price = Number(item.unit_price || item.price || 0);
         const total_price = Number(item.total_price || (quantity * unit_price) || 0);
         
+        // Try to get category from learned mappings
+        const learnedCategory = getCategoryForProduct(product_name);
+        
         return {
           ...item,
           id: `ai-${i + 1}`,
@@ -241,7 +245,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
           total_price,
           discount_amount: Number(item.discount_amount || 0),
           discounted_price: Number(item.discounted_price ?? total_price),
-          category: item.category || 'Outros',
+          category: learnedCategory || item.category || 'Outros',
         };
       });
 
@@ -338,6 +342,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
     }
 
     result.items.forEach(item => {
+      // Learn the categorization for future use
+      saveProductMapping(item.product_name, item.category);
+      
       history.push({
         id: `h_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         product_name: item.product_name,
@@ -422,6 +429,11 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
     if (!result) return;
     const newItems = result.items.map(item => {
       if (item.id !== id) return item;
+      
+      if (field === 'category') {
+        saveProductMapping(item.product_name, value as string);
+      }
+      
       const updated = { ...item, [field]: value };
       if (field === 'quantity' || field === 'unit_price') {
         updated.total_price = Number(updated.quantity) * Number(updated.unit_price);

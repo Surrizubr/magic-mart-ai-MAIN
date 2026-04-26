@@ -15,6 +15,8 @@ import { PermissionGate } from '@/components/PermissionGate';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+import { saveProductMapping } from '@/lib/categoryMappings';
+
 const categoryColors: Record<string, string> = {
   'Grãos': 'bg-accent text-accent-foreground',
   'Laticínios': 'bg-accent text-accent-foreground',
@@ -162,6 +164,10 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
 
   const handleUpdateCategory = (itemId: string, newCategory: string) => {
     const allHistory = getHistory();
+    const item = allHistory.find(h => h.id === itemId);
+    if (item) {
+      saveProductMapping(item.product_name, newCategory);
+    }
     const updated = allHistory.map(h => h.id === itemId ? { ...h, category: newCategory } : h);
     saveHistory(updated);
     setHistoryData(prev => prev.map(h => h.id === itemId ? { ...h, category: newCategory } : h));
