@@ -466,7 +466,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                       De: <span className="text-foreground">{fc(v.prevPrice)}</span>
                     </p>
                     <p className="text-[10px] text-destructive font-bold">
-                      {t('to')} <span className="text-destructive-foreground">{fc(v.currentPrice)}</span>
+                      {t('to')} <span className="text-foreground">{fc(v.currentPrice)}</span>
                     </p>
                   </div>
                 </div>
