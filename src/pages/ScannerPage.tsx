@@ -969,33 +969,31 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
                     </span>
                   )}
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-xs font-bold text-primary">
-                    {new Date(result.date + 'T12:00:00').toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR')}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {result.extracted_date && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setResult({ ...result, date: result.extracted_date! })}
-                        className={`h-6 px-2 text-[10px] font-bold transition-colors ${result.date === result.extracted_date ? 'text-green-600 bg-green-50' : 'text-primary hover:bg-primary/10'}`}
-                      >
-                        <History className="w-3 h-3 mr-1" />
-                        {t('receiptDate')}
-                      </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => setResult({ ...result, date: new Date().toISOString().slice(0, 10) })}
-                      className={`h-6 px-2 text-[10px] font-bold transition-colors ${result.date === new Date().toISOString().slice(0, 10) ? 'text-green-600 bg-green-50' : 'text-primary hover:bg-primary/10'}`}
-                    >
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {t('today')}
-                    </Button>
-                  </div>
-                </div>
+                <span className="text-xs font-bold text-primary">
+                  {new Date(result.date + 'T12:00:00').toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR')}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                {result.extracted_date && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setResult({ ...result, date: result.extracted_date! })}
+                    className={`h-6 px-2 text-[10px] font-bold transition-colors ${result.date === result.extracted_date ? 'text-green-600 bg-green-50' : 'text-primary hover:bg-primary/10'}`}
+                  >
+                    <History className="w-3 h-3 mr-1" />
+                    {t('receiptDate')}
+                  </Button>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setResult({ ...result, date: new Date().toISOString().slice(0, 10) })}
+                  className={`h-6 px-2 text-[10px] font-bold transition-colors ${result.date === new Date().toISOString().slice(0, 10) ? 'text-green-600 bg-green-50' : 'text-primary hover:bg-primary/10'}`}
+                >
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {t('today')}
+                </Button>
               </div>
               <input
                 type="date"
