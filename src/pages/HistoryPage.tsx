@@ -69,13 +69,21 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
       data = data.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore));
     }
     if (filteredProduct) {
-      data = data.filter(h => h.product_name === filteredProduct);
+      data = data.filter(h => 
+        h.product_name === filteredProduct || 
+        h.category === filteredProduct || 
+        t(h.category) === filteredProduct
+      );
     } else if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      data = data.filter(h => h.product_name.toLowerCase().includes(q));
+      data = data.filter(h => 
+        h.product_name.toLowerCase().includes(q) || 
+        h.category.toLowerCase().includes(q) ||
+        t(h.category).toLowerCase().includes(q)
+      );
     }
     return data;
-  }, [historyData, filterDate, filterStore, filteredProduct, searchQuery]);
+  }, [historyData, filterDate, filterStore, filteredProduct, searchQuery, t]);
 
   // Current Month Total (Top Banner) - Should be for the real current month
   const currentMonthTotal = useMemo(() => {
@@ -95,17 +103,18 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     return sums;
   }, [historyDisplay]);
 
-  // Product suggestions
-  const productSuggestions = useMemo(() => {
+  // Product and Category suggestions
+  const searchSuggestions = useMemo(() => {
     const names = new Set(getHistory().map(h => h.product_name));
-    return Array.from(names).sort();
-  }, []);
+    const catsVisible = new Set(getHistory().map(h => t(h.category)));
+    return Array.from(new Set([...names, ...catsVisible])).sort();
+  }, [t]);
 
   const filteredSuggestions = useMemo(() => {
     if (!searchQuery) return [];
     const q = searchQuery.toLowerCase();
-    return productSuggestions.filter(p => p.toLowerCase().includes(q)).slice(0, 5);
-  }, [searchQuery, productSuggestions]);
+    return searchSuggestions.filter(p => p.toLowerCase().includes(q)).slice(0, 5);
+  }, [searchQuery, searchSuggestions]);
 
   // Pre-calculate price variations using all history
   const { itemVariations, groupVariations } = (() => {
@@ -562,7 +571,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                       setSearchQuery(filteredSuggestions[0]);
                     } else if (searchQuery) {
                       // Just trigger filter with the current query if it matches something
-                      const match = productSuggestions.find(p => p.toLowerCase() === searchQuery.toLowerCase());
+                      const match = searchSuggestions.find(p => p.toLowerCase() === searchQuery.toLowerCase());
                       if (match) setFilteredProduct(match);
                     }
                     setShowSuggestions(false);
