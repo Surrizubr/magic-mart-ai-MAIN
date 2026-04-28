@@ -76,6 +76,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
   const [originalDiscounts, setOriginalDiscounts] = useState<Map<string, { discount_amount: number; discounted_price: number; discount: number }>>(new Map());
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
     setMode('choose');
@@ -1428,6 +1429,15 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
         className="hidden"
       />
 
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        multiple={mode === 'multi'}
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       <div className="p-4 space-y-4">
         {error === 'API_KEY_ERROR' ? (
           <motion.div
@@ -1589,10 +1599,19 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
                 {images.length === 0 ? t('takeReceiptPhoto') : t('addMorePhotos')}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {t('tapToTakeOrGallery')}
+                {t('tapToTakePhoto')}
               </p>
             </div>
           </button>
+
+          <Button
+            variant="outline"
+            onClick={() => galleryInputRef.current?.click()}
+            className="w-full h-12 border-2"
+          >
+            <Images className="w-4 h-4 mr-2" />
+            {t('selectFromGallery')}
+          </Button>
 
           {/* Single Photo Tips Banner */}
           {mode === 'single' && (
