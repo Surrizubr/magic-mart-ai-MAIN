@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { getStock, getLists, getHistory, saveStock, saveLists } from '@/data/mockData';
-import { Calendar, Package, AlertTriangle, ArrowRight, ChevronRight, ListChecks, Settings, Trash2, Archive, ListTodo, ShoppingCart, ScanLine, Share2 } from 'lucide-react';
+import { Calendar, Package, AlertTriangle, ArrowRight, ChevronRight, ListChecks, Settings, Trash2, Archive, ListTodo, ShoppingCart, ScanLine, Share2, Info } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { TabId, ShoppingList, StockItem } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -349,6 +349,19 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
               })()}
             </div>
           </div>
+        </motion.div>
+        
+        {/* Heatmap Info Banner */}
+        <motion.div
+          variants={item}
+          className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 flex gap-3 items-start"
+        >
+          <div className="bg-blue-500/10 p-2 rounded-xl">
+            <Info className="w-5 h-5 text-blue-600" />
+          </div>
+          <p className="text-xs text-blue-800/80 leading-relaxed font-medium">
+            {t('heatmapInfoBanner')}
+          </p>
         </motion.div>
       </motion.div>
     </div>

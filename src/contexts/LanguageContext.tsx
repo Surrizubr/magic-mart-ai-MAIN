@@ -308,6 +308,11 @@ const translations: Record<string, Record<Lang, string>> = {
   bestLocations: { pt: 'Melhores Locais para Comprar', en: 'Best Locations to Buy', es: 'Mejores Lugares para Comprar' },
   productsMonitored: { pt: '{count} produtos monitorados', en: '{count} products monitored', es: '{count} productos monitoreados' },
   suggestedCheapestDaysTitle: { pt: 'Sugestão de dias mais baratos', en: 'Suggested cheapest days', es: 'Días sugeridos más baratos' },
+  heatmapInfoBanner: { 
+    pt: 'A medida que você cadastrar mais notas fiscais, as sugestões do calendário se tornarão cada vez mais precisas para o seu perfil de consumo.', 
+    en: 'As you register more receipts, the calendar suggestions will become increasingly precise for your consumption profile.',
+    es: 'A medida que registres más facturas, as sugerencias del calendario se volverán cada vez más precisas para tu perfil de consumo.'
+  },
   calendarWeekCode: { pt: 'S', en: 'W', es: 'S' },
   savingsIndex: { pt: 'Índice Economia', en: 'Savings Index', es: 'Índice Ahorro' },
   insufficientHistory: { pt: 'Histórico insuficiente para calcular economia por local.', en: 'Insufficient history to calculate savings by location.', es: 'Historial insuficiente para calcular ahorro por lugar.' },
