@@ -1,13 +1,14 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ShoppingList, ShoppingListItem } from '@/types';
-import { ArrowLeft, Plus, ShoppingCart, CheckCircle, Trash2, MapPin, Loader2 } from 'lucide-react';
+import { ShoppingList, ShoppingListItem, StockItem } from '@/types';
+import { ArrowLeft, Plus, ShoppingCart, CheckCircle, Trash2, MapPin, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PermissionGate } from '@/components/PermissionGate';
+import { getStock } from '@/data/mockData';
 
 interface ListDetailPageProps {
   list: ShoppingList;
@@ -29,6 +30,20 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [storeName, setStoreName] = useState('');
   const [geoLoading, setGeoLoading] = useState(false);
   const [showLocationGate, setShowLocationGate] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const stockSuggestions = useMemo(() => {
+    const stock = getStock();
+    return stock.sort((a, b) => {
+      const order = { critical: 0, warning: 1, ok: 2 };
+      return (order[a.status as keyof typeof order] ?? 3) - (order[b.status as keyof typeof order] ?? 3);
+    }).slice(0, 10);
+  }, []);
+
+  const filteredSuggestions = useMemo(() => {
+    if (!newProduct) return stockSuggestions;
+    return stockSuggestions.filter(s => s.product_name.toLowerCase().includes(newProduct.toLowerCase()));
+  }, [newProduct, stockSuggestions]);
 
   useEffect(() => {
     const updatedList: ShoppingList = {
@@ -77,17 +92,19 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
     setShowAddItem(false);
   };
 
-  const handleConcluir = () => {
-    setShoppingMode(true);
+  const handleToggleMode = () => {
+    const newMode = !shoppingMode;
+    setShoppingMode(newMode);
     const updatedList: ShoppingList = {
       ...list,
       items,
       total_items: items.length,
-      checked_items: 0,
-      status: 'shopping',
+      status: newMode ? 'shopping' : 'active',
     };
     onUpdateList(updatedList);
-    toast.info(t('finishShoppingPrompt'));
+    if (newMode) {
+      toast.info(t('finishShoppingPrompt'));
+    }
   };
 
   const handleEncerrarClick = () => {
@@ -194,14 +211,16 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
       />
 
       <div className="p-4 space-y-3">
-        {/* Add item button - always visible */}
-        <Button size="sm" onClick={() => setShowAddItem(true)} className="gradient-primary text-primary-foreground border-0 w-full">
-          <Plus className="w-4 h-4 mr-1" /> {t('addItem')}
-        </Button>
+        {/* Add item button - only if not in shopping mode */}
+        {!shoppingMode && (
+          <Button size="sm" onClick={() => setShowAddItem(true)} className="gradient-primary text-primary-foreground border-0 w-full">
+            <Plus className="w-4 h-4 mr-1" /> {t('addItem')}
+          </Button>
+        )}
 
         {/* Add item form */}
         <AnimatePresence>
-          {showAddItem && (
+          {showAddItem && !shoppingMode && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -209,14 +228,53 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
               className="overflow-hidden"
             >
               <div className="bg-card rounded-lg shadow-card p-4 space-y-3">
-                <input
-                  value={newProduct}
-                  onChange={e => setNewProduct(e.target.value)}
-                  placeholder={t('productNamePlaceholder')}
-                  className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-primary/30"
-                  autoFocus
-                  onKeyDown={e => e.key === 'Enter' && addItem()}
-                />
+                <div className="relative">
+                  <input
+                    value={newProduct}
+                    onChange={e => {
+                      setNewProduct(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    placeholder={t('productNamePlaceholder')}
+                    className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 ring-primary/30"
+                    autoFocus
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        addItem();
+                      }
+                    }}
+                  />
+                  {showSuggestions && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card rounded-lg shadow-elevated border border-border overflow-hidden">
+                      {filteredSuggestions.map(s => (
+                        <button
+                          key={s.id}
+                          onClick={() => {
+                            setNewProduct(s.product_name);
+                            setNewUnit(s.unit);
+                            setNewPrice(s.last_price?.toString() || '');
+                            setShowSuggestions(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-accent border-b border-border/50 last:border-0 flex items-center justify-between"
+                        >
+                          <span className="font-medium text-foreground">{s.product_name}</span>
+                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                            s.status === 'critical' ? 'bg-destructive/10 text-destructive' : 
+                            s.status === 'warning' ? 'bg-amber-500/10 text-amber-600' : 
+                            'bg-primary/10 text-primary'
+                          }`}>
+                            {t(s.status)}
+                          </span>
+                        </button>
+                      ))}
+                      {filteredSuggestions.length === 0 && (
+                        <p className="px-4 py-3 text-xs text-muted-foreground text-center">{t('noResults')}</p>
+                      )}
+                    </div>
+                  )}
+                  {showSuggestions && <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setShowSuggestions(false)} />}
+                </div>
                 <div className="flex gap-2">
                   <input
                     value={newQty}
@@ -246,7 +304,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={addItem} className="gradient-primary text-primary-foreground border-0">{t('addItem')}</Button>
+                  <Button size="sm" onClick={addItem} className="gradient-primary text-primary-foreground border-0">{t('add')}</Button>
                   <Button size="sm" variant="ghost" onClick={() => setShowAddItem(false)}>{t('cancel')}</Button>
                 </div>
               </div>
@@ -266,8 +324,8 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => toggleItem(item.id)}
-                className={`bg-card rounded-lg shadow-card p-3 flex items-center gap-3 ${shoppingMode ? 'cursor-pointer' : ''} transition-opacity ${
-                  item.is_checked && shoppingMode ? 'opacity-50' : ''
+                className={`bg-card rounded-lg shadow-card p-3 flex items-center gap-3 ${shoppingMode ? 'cursor-pointer' : ''} transition-all ${
+                  item.is_checked && shoppingMode ? 'opacity-50 ring-1 ring-primary/20' : ''
                 }`}
               >
                 {shoppingMode && (
@@ -288,12 +346,14 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground mr-1">{t(item.category)}</span>
-                <button
-                  onClick={e => { e.stopPropagation(); removeItem(item.id); }}
-                  className="shrink-0 w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                </button>
+                {!shoppingMode && (
+                  <button
+                    onClick={e => { e.stopPropagation(); removeItem(item.id); }}
+                    className="shrink-0 w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                  </button>
+                )}
               </motion.div>
             ))}
           </AnimatePresence>
@@ -303,30 +363,31 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
           )}
         </div>
 
-        {/* Concluir Lista - only for non-shopping lists */}
-        {items.length > 0 && !shoppingMode && (
+        {/* Salvar/Editar Button */}
+        {items.length > 0 && (
           <Button
-            onClick={handleConcluir}
-            className="w-full gradient-primary text-primary-foreground border-0 h-12 text-base font-semibold"
+            onClick={handleToggleMode}
+            variant={shoppingMode ? "outline" : "default"}
+            className={`w-full h-12 text-base font-semibold ${!shoppingMode ? 'gradient-primary text-primary-foreground border-0' : 'bg-card border-primary text-primary hover:bg-primary/5'}`}
           >
-            <ShoppingCart className="w-5 h-5 mr-2" />
-            {t('finishList')} ({items.length} {t('items').toLowerCase()})
+            {shoppingMode ? <Plus className="w-5 h-5 mr-2" /> : <ShoppingCart className="w-5 h-5 mr-2" />}
+            {shoppingMode ? t('editList') : t('saveList')}
           </Button>
         )}
 
-        {/* Encerrar Compras - shopping mode */}
+        {/* Encerrar Compras - only when "saved" (shoppingMode) */}
         {shoppingMode && (
-          <div className="space-y-2">
-            <p className="text-xs text-center text-muted-foreground">
-              ⚠️ {t('finishShoppingPrompt')}
-            </p>
+          <div className="space-y-2 pt-2">
             <Button
               onClick={handleEncerrarClick}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-primary-foreground border-0 h-12 text-base font-semibold"
+              className="w-full bg-amber-600 hover:bg-amber-700 text-primary-foreground border-0 h-12 text-base font-semibold shadow-lg"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
               {t('endShopping')} ({checkedCount}/{items.length})
             </Button>
+            <p className="text-[10px] text-center text-muted-foreground">
+              ⚠️ {t('finishShoppingPrompt')}
+            </p>
           </div>
         )}
 

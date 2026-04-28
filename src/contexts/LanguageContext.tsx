@@ -66,6 +66,8 @@ const translations: Record<string, Record<Lang, string>> = {
   cancel: { pt: 'Cancelar', en: 'Cancel', es: 'Cancelar' },
   newList: { pt: 'Nova Lista', en: 'New List', es: 'Nueva Lista' },
   finishList: { pt: 'Concluir Lista', en: 'Finish List', es: 'Finalizar Lista' },
+  saveList: { pt: 'Salvar Lista', en: 'Save List', es: 'Guardar Lista' },
+  editList: { pt: 'Editar Lista', en: 'Edit List', es: 'Editar Lista' },
   endShopping: { pt: 'Encerrar Compras', en: 'End Shopping', es: 'Terminar Compras' },
   createList: { pt: 'Criar lista de compras', en: 'Create shopping list', es: 'Crear lista de compras' },
   goShopping: { pt: 'Fazer Mercado', en: 'Go Shopping', es: 'Ir al Mercado' },

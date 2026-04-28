@@ -124,7 +124,11 @@ const Index = () => {
         </motion.div>
       </AnimatePresence>
 
-      <BottomNav activeTab={activeTab} onTabChange={(tab) => { if (tab !== 'history') setHistoryFilter({}); navigateTo(tab); }} />
+      <BottomNav activeTab={activeTab} onTabChange={(tab) => { 
+        if (tab !== 'history') setHistoryFilter({}); 
+        if (tab === 'lists') localStorage.removeItem('selected_list_id');
+        navigateTo(tab); 
+      }} />
       <AppMenu open={menuOpen} onClose={() => { setMenuOpen(false); setMenuInitialSubMenu(null); }} initialSubMenu={menuInitialSubMenu} onNavigate={navigateTo} />
     </div>
   );
