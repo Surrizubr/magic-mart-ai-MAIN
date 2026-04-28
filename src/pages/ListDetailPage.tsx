@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PermissionGate } from '@/components/PermissionGate';
 import { getStock } from '@/data/mockData';
+import { deriveStatus } from '@/lib/stockHelpers';
 
 interface ListDetailPageProps {
   list: ShoppingList;
@@ -38,6 +39,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
     
     return stock
       .filter(s => !existingNames.has(s.product_name.toLowerCase()))
+      .map(s => ({ ...s, status: deriveStatus(s) }))
       .sort((a, b) => {
         const order = { critical: 0, low: 1, ok: 2 };
         const statusA = a.status === 'expired' ? 'critical' : a.status;
