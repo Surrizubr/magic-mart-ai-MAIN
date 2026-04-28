@@ -34,11 +34,17 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
 
   const stockSuggestions = useMemo(() => {
     const stock = getStock();
-    return stock.sort((a, b) => {
-      const order = { critical: 0, warning: 1, ok: 2 };
-      return (order[a.status as keyof typeof order] ?? 3) - (order[b.status as keyof typeof order] ?? 3);
-    }).slice(0, 20);
-  }, []);
+    const existingNames = new Set(items.map(item => item.product_name.toLowerCase()));
+    
+    return stock
+      .filter(s => !existingNames.has(s.product_name.toLowerCase()))
+      .sort((a, b) => {
+        const order = { critical: 0, low: 1, ok: 2 };
+        const statusA = a.status === 'expired' ? 'critical' : a.status;
+        const statusB = b.status === 'expired' ? 'critical' : b.status;
+        return (order[statusA as keyof typeof order] ?? 3) - (order[statusB as keyof typeof order] ?? 3);
+      }).slice(0, 20);
+  }, [items]);
 
   const filteredSuggestions = useMemo(() => {
     if (!newProduct) return stockSuggestions;
@@ -260,8 +266,8 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                         >
                           <span className="font-medium text-foreground">{s.product_name}</span>
                           <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                            s.status === 'critical' ? 'bg-destructive/10 text-destructive' : 
-                            s.status === 'warning' ? 'bg-amber-500/10 text-amber-600' : 
+                            s.status === 'critical' || s.status === 'expired' ? 'bg-destructive/10 text-destructive' : 
+                            s.status === 'low' ? 'bg-amber-500/10 text-amber-600' : 
                             'bg-primary/10 text-primary'
                           }`}>
                             {t(s.status)}
