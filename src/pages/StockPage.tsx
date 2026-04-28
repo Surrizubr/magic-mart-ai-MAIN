@@ -115,7 +115,7 @@ export function StockPage({ onBack }: StockPageProps) {
   const handleUpdateCategory = (itemId: string, newCategory: string) => {
     const item = stock.find(s => s.id === itemId);
     if (item) {
-      saveProductMapping(item.name, newCategory);
+      saveProductMapping(item.product_name, newCategory);
     }
     setStock(prev => prev.map(s => s.id === itemId ? { ...s, category: newCategory } : s));
     setEditingCategoryId(null);
