@@ -16,7 +16,7 @@ export class RevenueCatService {
     try {
       await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
       
-      let apiKey = REVENUECAT_API_KEY_WEB;
+      const apiKey = REVENUECAT_API_KEY_WEB;
       
       // Determine API Key based on platform if running on native via Capacitor
       // For now, in web preview, we use the web/android public keys

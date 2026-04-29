@@ -5,6 +5,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DevModeProvider } from "@/contexts/DevModeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
@@ -21,22 +23,26 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <DevModeProvider>
-        <LanguageProvider>
-          <SubscriptionProvider>
-            <TooltipProvider>
-              <Toaster position="top-center" />
-              <BrowserRouter>
-                <AuthGuard>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                  </Routes>
-                </AuthGuard>
-              </BrowserRouter>
-            </TooltipProvider>
-          </SubscriptionProvider>
-        </LanguageProvider>
-      </DevModeProvider>
+      <ThemeProvider>
+        <PreferencesProvider>
+          <DevModeProvider>
+            <LanguageProvider>
+              <SubscriptionProvider>
+                <TooltipProvider>
+                  <Toaster position="top-center" />
+                  <BrowserRouter>
+                    <AuthGuard>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                      </Routes>
+                    </AuthGuard>
+                  </BrowserRouter>
+                </TooltipProvider>
+              </SubscriptionProvider>
+            </LanguageProvider>
+          </DevModeProvider>
+        </PreferencesProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );
