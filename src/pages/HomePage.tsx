@@ -187,6 +187,13 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
               {t('seeAll')} <ArrowRight className="w-3 h-3" />
             </button>
           </div>
+
+          <div className="bg-[#fef9c3] border border-yellow-200 rounded-xl p-3 mb-4 flex items-start gap-2 shadow-sm">
+            <Info className="w-4 h-4 text-yellow-700 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-yellow-900 leading-tight">
+              {t('activeListsBanner')}
+            </p>
+          </div>
           {activeLists.length === 0 ? (
             <div className="bg-card rounded-xl border border-border p-4 text-center">
               <p className="text-xs text-muted-foreground">{t('noActiveLists')}</p>
@@ -236,6 +243,13 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
                 </span>
               )}
             </div>
+          </div>
+
+          <div className="bg-[#fef9c3] border border-yellow-200 rounded-xl p-3 mb-4 flex items-start gap-2 shadow-sm">
+            <Info className="w-4 h-4 text-yellow-700 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-yellow-900 leading-tight">
+              {t('alertsBanner')}
+            </p>
           </div>
           {criticalStock.length === 0 ? (
             <div className="bg-card rounded-xl border border-border p-4 text-center">

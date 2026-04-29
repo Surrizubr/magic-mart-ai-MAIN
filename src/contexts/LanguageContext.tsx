@@ -518,6 +518,16 @@ const translations: Record<string, Record<Lang, string>> = {
   confirmDateTitle: { pt: 'Confirmar Data', en: 'Confirm Date', es: 'Confirmar Fecha' },
   confirmDateDesc: { pt: 'Confirme a data da compra antes de salvar no histórico.', en: 'Confirm the purchase date before saving to history.', es: 'Confirma la fecha de compra antes de guardar en el historial.' },
   averagePurchase: { pt: 'Esta compra esteve na média das anteriores.', en: 'This purchase was in line with previous ones.', es: 'Esta compra estuvo en el promedio de las anteriores.' },
+  activeListsBanner: { 
+    pt: 'Navegue e crie listas de compras com estimativas de preços. Saiba o valor da compra antes de fazer mercado.', 
+    en: 'Browse and create shopping lists with price estimates. Know the purchase value before going to the market.', 
+    es: 'Navegue y cree listas de compras con estimaciones de precios. Conozca el valor de la compra antes de ir al mercado.' 
+  },
+  alertsBanner: { 
+    pt: 'Deslize os itens da lista de alertas para adicioná-los na lista de Lembrete de Compras. Nunca mais esqueça oque comprar.', 
+    en: 'Swipe alert list items to add them to the Shopping Reminder list. Never forget what to buy again.', 
+    es: 'Deslice los elementos de la lista de alertas para agregarlos a la lista de Recordatorios de Compra. No olvide nunca más qué comprar.' 
+  },
 };
 
 function formatNumber(value: number, lang: Lang): string {
