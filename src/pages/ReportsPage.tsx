@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } from 'recharts';
-import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar, MapPin, ExternalLink, PieChart as PieChartIcon, Tag, Store, Bus, Wrench, Utensils } from 'lucide-react';
+import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar, MapPin, ExternalLink, PieChart as PieChartIcon, Tag, Store, Bus, Wrench, Utensils, Building2, Navigation } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -316,7 +316,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         {topStores.length > 0 && (
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Store className="w-4 h-4 text-primary" />
+              <Building2 className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-bold text-foreground">{t('mostVisitedStores')}</h3>
             </div>
             <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin">
@@ -334,7 +334,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                     className="p-2 rounded-lg hover:bg-accent/50 transition-colors"
                     title={t('openInMaps')}
                   >
-                    <ExternalLink className="w-4 h-4 text-primary" />
+                    <Navigation className="w-4 h-4 text-primary" />
                   </button>
                 </div>
               ))}
@@ -493,7 +493,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                   onClick={() => openMaps(v.store_name, v.store_lat, v.store_lng)}
                   className="p-2 rounded-lg hover:bg-accent/50 transition-colors"
                 >
-                  <MapPin className="w-4 h-4 text-primary" />
+                  <Navigation className="w-4 h-4 text-primary" />
                 </button>
               </div>
             ))}
