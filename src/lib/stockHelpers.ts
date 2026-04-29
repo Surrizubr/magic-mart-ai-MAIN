@@ -1,4 +1,4 @@
-import { StockItem, PurchaseHistory } from '@/types';
+import { StockItem, PurchaseHistory, ShoppingList } from '@/types';
 
 /**
  * Computes how many days are left for a stock item based on:
@@ -103,21 +103,114 @@ export function daysSincePurchase(item: StockItem & { last_purchase_date?: strin
 
 /**
  * Returns the estimated price for a product based on history.
- * Uses the average of the last 3 purchases if available, otherwise just the most recent one.
+ * Uses exact matches first. If none, tries to find similar products by name similarity.
  */
-export function getEstimatedPrice(productName: string, history: PurchaseHistory[]): number {
-  if (!history || history.length === 0) return 0;
+export function getEstimatedPrice(productName: string, history: PurchaseHistory[], stock: StockItem[] = []): number {
+  if (!productName) return 0;
 
-  const matches = history
-    .filter(h => h.product_name.toLowerCase() === productName.toLowerCase())
-    .sort((a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime());
-
-  if (matches.length === 0) return 0;
+  const normalizedTarget = productName.toLowerCase().trim();
   
-  // Use last 3 purchases to average out some variations
-  const last3 = matches.slice(0, 3);
-  const sum = last3.reduce((acc, curr) => acc + curr.price, 0);
-  return sum / last3.length;
+  // 1. Try exact matches first in history
+  if (history && history.length > 0) {
+    const exactMatches = history
+      .filter(h => h.product_name.toLowerCase().trim() === normalizedTarget)
+      .sort((a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime());
+
+    if (exactMatches.length > 0) {
+      // Use last 3 purchases to average out some variations
+      const last3 = exactMatches.slice(0, 3);
+      const sum = last3.reduce((acc, curr) => acc + curr.price, 0);
+      return sum / last3.length;
+    }
+  }
+
+  // 2. Try exact match in stock
+  if (stock && stock.length > 0) {
+    const stockMatch = stock.find(s => s.product_name.toLowerCase().trim() === normalizedTarget);
+    if (stockMatch && stockMatch.last_price > 0) {
+      return stockMatch.last_price;
+    }
+  }
+
+  // 3. If no exact match, look for similar products in history
+  if (history && history.length > 0) {
+    const targetWords = normalizedTarget.split(/\s+/).filter(w => w.length > 2);
+    if (targetWords.length > 0) {
+      const similarityScores = history.map(h => {
+        const hName = h.product_name.toLowerCase().trim();
+        const hWords = hName.split(/\s+/).filter(w => w.length > 2);
+        if (hWords.length === 0) return { item: h, score: 0 };
+
+        const intersection = targetWords.filter(w => hWords.includes(w));
+        const score = (2.0 * intersection.length) / (targetWords.length + hWords.length);
+        return { item: h, score };
+      });
+
+      const similarItems = similarityScores
+        .filter(s => s.score > 0.3)
+        .sort((a, b) => b.score - a.score || new Date(b.item.purchase_date).getTime() - new Date(a.item.purchase_date).getTime());
+
+      if (similarItems.length > 0) {
+        const topScore = similarItems[0].score;
+        const selectedItems = similarItems.filter(s => s.score >= topScore * 0.8).slice(0, 5);
+        const sum = selectedItems.reduce((acc, curr) => acc + curr.item.price, 0);
+        return sum / selectedItems.length;
+      }
+    }
+  }
+
+  // 4. Try similar matches in stock if history failed
+  if (stock && stock.length > 0) {
+    const targetWords = normalizedTarget.split(/\s+/).filter(w => w.length > 2);
+    if (targetWords.length > 0) {
+      const similarityScores = stock.map(s => {
+        const sName = s.product_name.toLowerCase().trim();
+        const sWords = sName.split(/\s+/).filter(w => w.length > 2);
+        if (sWords.length === 0) return { item: s, score: 0 };
+
+        const intersection = targetWords.filter(w => sWords.includes(w));
+        const score = (2.0 * intersection.length) / (targetWords.length + sWords.length);
+        return { item: s, score };
+      });
+
+      const similarItems = similarityScores
+        .filter(s => s.score > 0.3 && s.item.last_price > 0)
+        .sort((a, b) => b.score - a.score);
+
+      if (similarItems.length > 0) {
+        const topScore = similarItems[0].score;
+        const selectedItems = similarItems.filter(s => s.score >= topScore * 0.8).slice(0, 3);
+        const sum = selectedItems.reduce((acc, curr) => acc + curr.item.last_price, 0);
+        return sum / selectedItems.length;
+      }
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Automatically fills missing estimated prices in a shopping list
+ * using purchase history and current stock information.
+ */
+export function autoFillListPrices(list: ShoppingList, history: PurchaseHistory[], stock: StockItem[]): ShoppingList {
+  let changed = false;
+  const updatedItems = list.items.map(item => {
+    if (item.estimated_price === 0 || !item.estimated_price) {
+      const estimated = getEstimatedPrice(item.product_name, history, stock);
+      if (estimated > 0) {
+        changed = true;
+        return { ...item, estimated_price: estimated };
+      }
+    }
+    return item;
+  });
+  
+  if (!changed) return list;
+  
+  const estimated_total = updatedItems.reduce((acc, curr) => acc + (curr.estimated_price * curr.quantity), 0);
+  
+  return { ...list, items: updatedItems, estimated_total };
 }
 
 /**

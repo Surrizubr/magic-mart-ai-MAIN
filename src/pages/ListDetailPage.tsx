@@ -21,6 +21,9 @@ interface ListDetailPageProps {
 export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }: ListDetailPageProps) {
   const { lang, t, currency, formatCurrency: fc } = useLanguage();
   const [items, setItems] = useState<ShoppingListItem[]>(list.items);
+  const history = useMemo(() => getHistory(), []);
+  const stock = useMemo(() => getStock(), []);
+  
   const [showAddItem, setShowAddItem] = useState(false);
   const [newProduct, setNewProduct] = useState('');
   const [newQty, setNewQty] = useState('1');
@@ -34,7 +37,6 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const stockSuggestions = useMemo(() => {
-    const stock = getStock();
     const existingNames = new Set(items.map(item => item.product_name.toLowerCase()));
     
     return stock
@@ -82,8 +84,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
 
   const addItem = () => {
     if (!newProduct.trim()) return;
-    const historyData = getHistory();
-    const priceFromHistory = getEstimatedPrice(newProduct.trim(), historyData);
+    const priceFromHistory = getEstimatedPrice(newProduct.trim(), history, stock);
     
     const newItem: ShoppingListItem = {
       id: Date.now().toString(),
@@ -206,14 +207,13 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   };
 
   const checkedCount = items.filter(i => i.is_checked).length;
-  const history = getHistory();
 
   const estimatedTotal = useMemo(() => {
     return items.reduce((total, item) => {
-      const price = item.estimated_price || getEstimatedPrice(item.product_name, history);
+      const price = item.estimated_price || getEstimatedPrice(item.product_name, history, stock);
       return total + (price * item.quantity);
     }, 0);
-  }, [items, history]);
+  }, [items, history, stock]);
 
   return (
     <div className="pb-20">
@@ -373,7 +373,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                   <p className="text-xs text-muted-foreground">
                     {item.quantity} {item.unit}
                     {(() => {
-                      const estPrice = item.estimated_price || getEstimatedPrice(item.product_name, history);
+                      const estPrice = item.estimated_price || getEstimatedPrice(item.product_name, history, stock);
                       if (estPrice > 0) {
                         return (
                           <span className="flex items-center gap-1 mt-1 font-medium text-primary">

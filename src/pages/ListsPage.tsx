@@ -10,7 +10,7 @@ import { ShoppingList, ShoppingListItem, StockItem, PurchaseHistory } from '@/ty
 import { ListDetailPage } from './ListDetailPage';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getEstimatedPrice } from '@/lib/stockHelpers';
+import { getEstimatedPrice, autoFillListPrices } from '@/lib/stockHelpers';
 
 type Filter = 'active' | 'completed' | 'archived';
 
@@ -25,6 +25,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
   const [newName, setNewName] = useState('');
   const [lists, setLists] = useState<ShoppingList[]>(() => getLists());
   const history = useMemo(() => getHistory(), []);
+  const stock = useMemo(() => getStock(), []);
   const [selectedListId, setSelectedListId] = useState<string | null>(() => localStorage.getItem('selected_list_id'));
   const selectedList = lists.find(l => l.id === selectedListId) || null;
 
@@ -39,6 +40,28 @@ export function ListsPage({ onBack }: ListsPageProps) {
       localStorage.removeItem('selected_list_id');
     }
   }, [selectedListId]);
+
+  // Proactively fill missing prices in active lists
+  useEffect(() => {
+    if (lists.length === 0) return;
+    
+    let anyChanged = false;
+    const updatedLists = lists.map(l => {
+      if (l.status === 'active' || l.status === 'shopping') {
+        const updated = autoFillListPrices(l, history, stock);
+        if (updated !== l) {
+          anyChanged = true;
+          return updated;
+        }
+      }
+      return l;
+    });
+
+    if (anyChanged) {
+      setLists(updatedLists);
+      saveLists(updatedLists);
+    }
+  }, [history, stock]); // history and stock are stable from useMemo
 
   const filtered = lists.filter(l => {
     if (filter === 'active') return l.status === 'active' || l.status === 'shopping';
@@ -224,6 +247,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
               list={l}
               index={i}
               history={history}
+              stock={stock}
               onSelect={() => setSelectedListId(l.id)}
               onSwipe={(dir) => handleSwipe(l.id, dir)}
             />
@@ -241,12 +265,14 @@ function SwipeableListCard({
   list,
   index,
   history,
+  stock,
   onSelect,
   onSwipe,
 }: {
   list: ShoppingList;
   index: number;
   history: PurchaseHistory[];
+  stock: StockItem[];
   onSelect: () => void;
   onSwipe: (dir: 'left' | 'right') => void;
 }) {
@@ -256,10 +282,10 @@ function SwipeableListCard({
 
   const estimatedTotal = useMemo(() => {
     return list.items.reduce((total, item) => {
-      const price = item.estimated_price || getEstimatedPrice(item.product_name, history);
+      const price = item.estimated_price || getEstimatedPrice(item.product_name, history, stock);
       return total + (price * item.quantity);
     }, 0);
-  }, [list.items, history]);
+  }, [list.items, history, stock]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     if (info.offset.x < -threshold) {
