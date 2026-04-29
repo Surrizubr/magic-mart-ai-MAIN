@@ -1,7 +1,10 @@
 import { Purchases, LOG_LEVEL, CustomerInfo } from '@revenuecat/purchases-capacitor';
 import { RevenueCatUI, PAYWALL_RESULT } from '@revenuecat/purchases-capacitor-ui';
 
-const REVENUECAT_API_KEY = 'test_TFGrjJJFMQtcxougEBZrhOnbdjf';
+const REVENUECAT_API_KEY_WEB = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY_WEB || 'goog_your_key_here';
+const REVENUECAT_API_KEY_IOS = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY_IOS || 'goog_your_key_here';
+const REVENUECAT_API_KEY_ANDROID = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY_ANDROID || 'goog_your_key_here';
+
 const ENTITLEMENT_ID = 'IDAPPS Premium';
 
 export class RevenueCatService {
@@ -12,8 +15,14 @@ export class RevenueCatService {
 
     try {
       await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+      
+      let apiKey = REVENUECAT_API_KEY_WEB;
+      
+      // Determine API Key based on platform if running on native via Capacitor
+      // For now, in web preview, we use the web/android public keys
+      
       await Purchases.configure({
-        apiKey: REVENUECAT_API_KEY,
+        apiKey: apiKey,
       });
       this.initialized = true;
       console.log('RevenueCat initialized successfully');

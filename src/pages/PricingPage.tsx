@@ -37,9 +37,9 @@ export function PricingPage() {
           <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center mx-auto">
             <Crown className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">{t('subBannerTitle')}</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('subBannerTitle') || 'Assinatura Necessária'}</h1>
           <p className="text-sm text-muted-foreground">
-            {t('pricingDesc')}
+            {t('pricingDescFirstAccess') || 'Para começar a usar o Magicmart AI, escolha um plano abaixo. O pagamento é necessário para o primeiro acesso.'}
           </p>
         </div>
 
