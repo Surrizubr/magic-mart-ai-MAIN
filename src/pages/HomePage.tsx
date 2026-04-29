@@ -378,6 +378,30 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
                 return grid;
               })()}
             </div>
+
+            {/* Legend */}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 mt-6 px-1 pt-4 border-t border-border/40">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-primary/80" />
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tight">{t('veryCheap')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-primary/40" />
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tight">{t('cheap')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-primary/10" />
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tight">{t('ok')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-[#f59e0b]/40" />
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tight">{t('expensive')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-[#ef4444]/40" />
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tight">{t('veryExpensive')}</span>
+              </div>
+            </div>
           </div>
         </motion.div>
         
