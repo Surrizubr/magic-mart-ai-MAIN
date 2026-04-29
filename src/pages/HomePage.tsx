@@ -188,9 +188,11 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
             </button>
           </div>
 
-          <div className="bg-[#fef9c3] border border-yellow-200 rounded-xl p-3 mb-4 flex items-start gap-2 shadow-sm">
-            <Info className="w-4 h-4 text-yellow-700 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-yellow-900 leading-tight">
+          <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 mb-4 flex items-start gap-3 shadow-sm">
+            <div className="bg-amber-500/10 p-2 rounded-xl">
+              <Info className="w-5 h-5 text-amber-600 shrink-0" />
+            </div>
+            <p className="text-xs text-amber-800/80 leading-relaxed font-medium">
               {t('activeListsBanner')}
             </p>
           </div>
@@ -245,9 +247,11 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
             </div>
           </div>
 
-          <div className="bg-[#fef9c3] border border-yellow-200 rounded-xl p-3 mb-4 flex items-start gap-2 shadow-sm">
-            <Info className="w-4 h-4 text-yellow-700 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-yellow-900 leading-tight">
+          <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 mb-4 flex items-start gap-3 shadow-sm">
+            <div className="bg-amber-500/10 p-2 rounded-xl">
+              <Info className="w-5 h-5 text-amber-600 shrink-0" />
+            </div>
+            <p className="text-xs text-amber-800/80 leading-relaxed font-medium">
               {t('alertsBanner')}
             </p>
           </div>
