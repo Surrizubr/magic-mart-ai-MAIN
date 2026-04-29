@@ -12,10 +12,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PermissionGate } from '@/components/PermissionGate';
+import { updateProductCategorySync } from '@/lib/dataSync';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-import { saveProductMapping } from '@/lib/categoryMappings';
 
 const categoryColors: Record<string, string> = {
   'Grãos': 'bg-accent text-accent-foreground',
@@ -171,15 +170,14 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
   const [editingItemCategoryId, setEditingItemCategoryId] = useState<string | null>(null);
   const [pendingImportItems, setPendingImportItems] = useState<any[] | null>(null);
 
-  const handleUpdateCategory = (itemId: string, newCategory: string) => {
-    const allHistory = getHistory();
-    const item = allHistory.find(h => h.id === itemId);
+  const handleUpdateCategory = async (itemId: string, newCategory: string) => {
+    const item = historyData.find(h => h.id === itemId);
     if (item) {
-      saveProductMapping(item.product_name, newCategory);
+      // Synchronize across stock and history
+      await updateProductCategorySync(item.product_name, newCategory);
+      // Update local state by re-fetching from source
+      setHistoryData(getHistory());
     }
-    const updated = allHistory.map(h => h.id === itemId ? { ...h, category: newCategory } : h);
-    saveHistory(updated);
-    setHistoryData(prev => prev.map(h => h.id === itemId ? { ...h, category: newCategory } : h));
     setEditingItemCategoryId(null);
     toast.success(t('categoryUpdated'));
   };

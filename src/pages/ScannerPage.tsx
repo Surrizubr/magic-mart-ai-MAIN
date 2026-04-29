@@ -231,14 +231,14 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
       setProgressPercent(95);
       await new Promise(r => setTimeout(r, 800));
 
-      const items: ReceiptItem[] = (resultData.items || []).map((item: any, i: number) => {
+      const items: ReceiptItem[] = await Promise.all((resultData.items || []).map(async (item: any, i: number) => {
         const product_name = item.product_name || item.name || t('unnamedProduct');
         const quantity = Number(item.quantity) || 1;
         const unit_price = Number(item.unit_price || item.price || 0);
         const total_price = Number(item.total_price || (quantity * unit_price) || 0);
         
         // Try to get category from learned mappings
-        const learnedCategory = getCategoryForProduct(product_name);
+        const learnedCategory = await getCategoryForProduct(product_name);
         
         return {
           ...item,
@@ -252,7 +252,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
           discounted_price: Number(item.discounted_price ?? total_price),
           category: learnedCategory || item.category || 'Outros',
         };
-      });
+      }));
 
       const itemsSum = items.reduce((s: number, i: ReceiptItem) => s + i.total_price, 0);
       const discountedSum = items.reduce((s: number, i: ReceiptItem) => s + i.discounted_price, 0);
@@ -365,9 +365,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
         history = history.filter(h => !(h.purchase_date === initialDate && h.store_name === initialStore));
       }
 
-      result.items.forEach(item => {
+      await Promise.all(result.items.map(async (item) => {
         // Learn the categorization for future use
-        saveProductMapping(item.product_name, item.category);
+        await saveProductMapping(item.product_name, item.category);
         
         history.push({
           id: `h_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -381,7 +381,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
           scanned: true,
           receipt_id: receiptId,
         });
-      });
+      }));
       await saveHistory(history);
 
       // Save to stock_items - always save to stock if establishment_type is NOT restaurant/transport/maintenance or if specifically allowed
@@ -577,13 +577,13 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
     navigator.geolocation.getCurrentPosition(successCallback, errorCallback, options);
   };
 
-  const updateItem = (id: string, field: keyof ReceiptItem, value: string | number) => {
+  const updateItem = async (id: string, field: keyof ReceiptItem, value: string | number) => {
     if (!result) return;
-    const newItems = result.items.map(item => {
+    const newItems = await Promise.all(result.items.map(async (item) => {
       if (item.id !== id) return item;
       
       if (field === 'category') {
-        saveProductMapping(item.product_name, value as string);
+        await saveProductMapping(item.product_name, value as string);
       }
       
       const updated = { ...item, [field]: value };
@@ -595,7 +595,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu, initialDa
         updated.discounted_price = updated.total_price - Number(value);
       }
       return updated;
-    });
+    }));
     const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
     const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
     setResult({

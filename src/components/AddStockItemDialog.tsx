@@ -36,19 +36,22 @@ export function AddStockItemDialog({ open, onOpenChange, onAdd }: AddStockItemDi
   const [price, setPrice] = useState('');
 
   useEffect(() => {
-    if (name.trim()) {
-      const suggested = getCategoryForProduct(name.trim());
-      if (suggested) {
-        setCategory(suggested);
+    const fetchCategory = async () => {
+      if (name.trim()) {
+        const suggested = await getCategoryForProduct(name.trim());
+        if (suggested) {
+          setCategory(suggested);
+        }
       }
-    }
+    };
+    fetchCategory();
   }, [name]);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!name.trim()) return;
     
     // Save mapping when manually adding/editing
-    saveProductMapping(name.trim(), category);
+    await saveProductMapping(name.trim(), category);
     
     const totalPrice = Math.max(0, Number(price) || 0);
     const qty = Math.max(0, Number(quantity) || 1);

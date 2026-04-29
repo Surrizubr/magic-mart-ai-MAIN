@@ -1,4 +1,6 @@
 
+import { storage } from './storage';
+
 interface ProductMapping {
   productName: string;
   category: string;
@@ -6,25 +8,20 @@ interface ProductMapping {
 
 const STORAGE_KEY = 'product_category_mappings';
 
-export function getProductMappings(): Record<string, string> {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return {};
-  try {
-    return JSON.parse(stored);
-  } catch (e) {
-    return {};
-  }
+export async function getProductMappings(): Promise<Record<string, string>> {
+  const mappings = await storage.get<Record<string, string>>(STORAGE_KEY);
+  return mappings || {};
 }
 
-export function saveProductMapping(productName: string, category: string) {
+export async function saveProductMapping(productName: string, category: string) {
   const normalizedName = productName.toLowerCase().trim();
-  const mappings = getProductMappings();
+  const mappings = await getProductMappings();
   mappings[normalizedName] = category;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(mappings));
+  await storage.set(STORAGE_KEY, mappings);
 }
 
-export function getCategoryForProduct(productName: string): string | null {
+export async function getCategoryForProduct(productName: string): Promise<string | null> {
   const normalizedName = productName.toLowerCase().trim();
-  const mappings = getProductMappings();
+  const mappings = await getProductMappings();
   return mappings[normalizedName] || null;
 }
