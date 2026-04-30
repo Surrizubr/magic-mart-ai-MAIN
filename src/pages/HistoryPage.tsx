@@ -751,14 +751,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                             rightIcon={<ListPlus className="w-5 h-5 text-primary-foreground" />}
                             rightBg="bg-primary"
                           >
-                            <div 
-                              className={`flex items-center justify-between py-2 border-b border-border/50 last:border-0 bg-background ${itemVariations[item.id] !== undefined ? 'cursor-pointer active:bg-accent/30' : ''}`}
-                              onClick={() => {
-                                if (itemVariations[item.id] !== undefined) {
-                                  setSelectedItemForHistory(item.product_name);
-                                }
-                              }}
-                            >
+                            <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0 bg-background">
                               <div className="flex-1 min-w-0 pr-4">
                                 <p className="text-sm font-medium text-foreground">{item.product_name}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
@@ -768,19 +761,19 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                                       onValueChange={(val) => handleUpdateCategory(item.id, val)}
                                       onOpenChange={(open) => { if (!open) setEditingItemCategoryId(null); }}
                                     >
-                                      <SelectTrigger className="h-7 text-[10px] py-0 px-2 min-w-[100px] border-primary/30">
+                                      <SelectTrigger className="h-7 text-[11px] py-0 px-2 min-w-[100px] border-primary/30">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
                                         {categories.map(c => (
-                                          <SelectItem key={c} value={c} className="text-[11px]">{t(c)}</SelectItem>
+                                          <SelectItem key={c} value={c} className="text-[13px]">{t(c)}</SelectItem>
                                         ))}
                                       </SelectContent>
                                     </Select>
                                   ) : (
                                     <span 
                                       onClick={() => setEditingItemCategoryId(item.id)}
-                                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1 cursor-pointer hover:ring-1 ring-primary/20 transition-all`}
+                                      className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1 cursor-pointer hover:ring-1 ring-primary/20 transition-all`}
                                     >
                                       {catIcon} {t(item.category)}
                                     </span>
@@ -788,7 +781,15 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                                   <span className="text-xs text-muted-foreground">{item.quantity} {t('un')}</span>
                                 </div>
                               </div>
-                              <div className="text-right">
+                              <div 
+                                className={`text-right p-1 -m-1 rounded-md transition-colors ${itemVariations[item.id] !== undefined ? 'cursor-pointer active:bg-accent/50 hover:bg-accent/20' : ''}`}
+                                onClick={(e) => {
+                                  if (itemVariations[item.id] !== undefined) {
+                                    e.stopPropagation();
+                                    setSelectedItemForHistory(item.product_name);
+                                  }
+                                }}
+                              >
                                 <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
                                 {itemVariations[item.id] !== undefined && (
                                   <div className={`flex items-center justify-end gap-0.5 text-[10px] font-bold ${itemVariations[item.id] > 0 ? 'text-destructive' : 'text-emerald-600'}`}>

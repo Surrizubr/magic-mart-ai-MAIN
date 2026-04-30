@@ -230,19 +230,19 @@ export function StockPage({ onBack }: StockPageProps) {
                             onValueChange={(val) => handleUpdateCategory(s.id, val)}
                             onOpenChange={(open) => { if (!open) setEditingCategoryId(null); }}
                           >
-                            <SelectTrigger className="h-7 text-[10px] py-0 px-2 min-w-[100px] border-primary/30">
+                            <SelectTrigger className="h-7 text-[11px] py-0 px-2 min-w-[100px] border-primary/30">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               {categories.map(c => (
-                                <SelectItem key={c} value={c} className="text-[11px]">{t(c)}</SelectItem>
+                                <SelectItem key={c} value={c} className="text-[13px]">{t(c)}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         ) : (
                           <span 
                             onClick={() => setEditingCategoryId(s.id)}
-                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent text-accent-foreground flex items-center gap-1 cursor-pointer hover:ring-1 ring-primary/20 transition-all`}
+                            className={`text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-accent-foreground flex items-center gap-1 cursor-pointer hover:ring-1 ring-primary/20 transition-all`}
                           >
                             {categoryIcons[s.category]?.icon || '🛒'} {t(categoryIcons[s.category]?.key || s.category)}
                           </span>
