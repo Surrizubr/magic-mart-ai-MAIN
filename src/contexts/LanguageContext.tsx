@@ -310,6 +310,7 @@ const translations: Record<string, Record<Lang, string>> = {
   bestLocations: { pt: 'Melhores Locais para Comprar', en: 'Best Locations to Buy', es: 'Mejores Lugares para Comprar' },
   productsMonitored: { pt: '{count} produtos monitorados', en: '{count} products monitored', es: '{count} productos monitoreados' },
   suggestedCheapestDaysTitle: { pt: 'Sugestões de dias de compras\npara este mês', en: 'Shopping day suggestions\nfor this month', es: 'Sugerencias de días de compras\npara este mes' },
+  lastThreeMonthsHistory: { pt: 'Histórico dos últimos três meses', en: 'Last three months history', es: 'Historial de los últimos tres meses' },
   noPurchasesThisMonthTitle: { pt: 'Nenhuma compra este mês', en: 'No purchases this month', es: 'Sin compras este mes' },
   noPurchasesThisMonthDesc: { pt: 'Você ainda não registrou nenhuma compra para o mês atual. Seus relatórios e histórico serão atualizados assim que você escanear sua primeira nota.', en: 'You haven\'t recorded any purchases for the current month yet. Your reports and history will update as soon as you scan your first receipt.', es: 'Aún no has registrado ninguna compra para el mes actual. Tus informes e historial se actualizarán tan pronto como escanees tu primer recibo.' },
   heatmapInfoBanner: { 

@@ -662,14 +662,16 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
         </div>
 
         {/* Last 3 Months mini-summary - Stacked vertically */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
+          <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1">
+            {t('lastThreeMonthsHistory')}
+          </h3>
           {lastThreeMonthsTotals.map((m) => (
-            <div key={m.key} className="bg-card/50 rounded-xl border border-border/50 p-3 text-center">
-              <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider mb-0.5">{t('monthTotal')}</p>
-              <p className="text-[9px] text-muted-foreground mb-1 flex items-center justify-center gap-1 uppercase">
+            <div key={m.key} className="bg-card/40 rounded-xl border border-border/40 px-3 py-2 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase">
                 {m.label} {m.year}
-              </p>
-              <p className="text-lg font-bold text-foreground/80">{fc(m.total)}</p>
+              </span>
+              <span className="text-sm font-bold text-foreground/70">{fc(m.total)}</span>
             </div>
           ))}
         </div>
