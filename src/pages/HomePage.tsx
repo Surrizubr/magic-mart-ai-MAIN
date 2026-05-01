@@ -295,7 +295,7 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
               <Calendar className="w-5 h-5 text-primary shrink-0" />
-              <h2 className="text-sm font-bold text-foreground tracking-tight truncate">{t('suggestedCheapestDaysTitle')}</h2>
+              <h2 className="text-sm font-bold text-foreground tracking-tight leading-tight whitespace-pre-line">{t('suggestedCheapestDaysTitle')}</h2>
             </div>
             <button 
               onClick={() => onNavigate('savings')} 
