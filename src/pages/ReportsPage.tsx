@@ -33,7 +33,10 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
   // Group all history by month for the month picker and evolution chart
   const monthsData = useMemo(() => {
     const acc = history.reduce<Record<string, { label: string, year: number, month: number, total: number }>>((acc, h) => {
-      const [yStr, mStr] = h.purchase_date.split('-');
+      const parts = h.purchase_date.split('-');
+      if (parts.length < 2) return acc;
+      const yStr = parts[0];
+      const mStr = parts[1].padStart(2, '0');
       const year = parseInt(yStr);
       const month = parseInt(mStr) - 1;
       const key = `${yStr}-${mStr}`;
@@ -172,14 +175,20 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     'Padaria': 'Alimentos',
     'Doces': 'Alimentos',
     'Restaurante': 'Restaurante',
+    'Restaurantes': 'Restaurante',
     'Restaurant': 'Restaurante',
+    'Restaurants': 'Restaurante',
+    'Alimentação fora': 'Restaurante',
     'Manutenção': 'Manutenção',
     'Maintenance': 'Manutenção',
     'Mantenimiento': 'Manutenção',
+    'Carro': 'Manutenção',
     'Transporte': 'Transporte',
+    'Transportes': 'Transporte',
     'Transport': 'Transporte',
     'Transportation': 'Transporte',
     'Combustível': 'Transporte',
+    'Gasolina': 'Transporte',
     'Fuel': 'Transporte',
   };
 
@@ -423,7 +432,9 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
           const transportByMonth = history.reduce<Record<string, number>>((acc, h) => {
             const mergedCat = categoryMerge[h.category] || h.category;
             if (mergedCat !== 'Transporte') return acc;
-            const key = h.purchase_date.slice(0, 7); // Use slice for YYYY-MM
+            const [y, m] = h.purchase_date.split('-');
+            if (!y || !m) return acc;
+            const key = `${y}-${m.padStart(2, '0')}`;
             if (recentMonthKeys.includes(key)) {
               acc[key] = (acc[key] || 0) + h.total_price;
             }
@@ -470,7 +481,9 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
           const restaurantByMonth = history.reduce<Record<string, number>>((acc, h) => {
             const mergedCat = categoryMerge[h.category] || h.category;
             if (mergedCat !== 'Restaurante') return acc;
-            const key = h.purchase_date.slice(0, 7); // Use slice for YYYY-MM
+            const [y, m] = h.purchase_date.split('-');
+            if (!y || !m) return acc;
+            const key = `${y}-${m.padStart(2, '0')}`;
             if (recentMonthKeys.includes(key)) {
               acc[key] = (acc[key] || 0) + h.total_price;
             }

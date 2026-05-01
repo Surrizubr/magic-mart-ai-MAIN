@@ -27,6 +27,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState<{ open: boolean; data: any }>({ open: false, data: null });
 
   const handleReset = () => {
     resetAllData();
@@ -48,10 +49,19 @@ export function BackupPage({ onBack }: BackupPageProps) {
     try {
       const allData = await storage.getAll();
       
+      // Include app settings from localStorage
+      const appSettings = {
+        'app-lang': localStorage.getItem('app-lang'),
+        'app-theme': localStorage.getItem('app-theme'),
+        'app-fontSize': localStorage.getItem('app-fontSize'),
+        'gemini-api-key': localStorage.getItem('gemini-api-key'),
+      };
+
       // Add version/metadata
       const backupData = {
-        version: 1,
+        version: 2,
         timestamp: new Date().toISOString(),
+        settings: appSettings,
         data: allData
       };
 
@@ -95,18 +105,32 @@ export function BackupPage({ onBack }: BackupPageProps) {
       if (!backupJson || !backupJson.data) throw new Error('Invalid format');
 
       const data = backupJson.data;
+      const settings = backupJson.settings || {};
       
       // Clear current data first
       await storage.clear();
-      localStorage.clear();
-
-      // Restore each key
-      for (const [key, value] of Object.entries(data)) {
-        if (key === 'gemini-api-key' && typeof value === 'string') {
-          localStorage.setItem(key, value);
-        } else {
-          await storage.set(key, value);
+      // Keep essential login info if any, but clear preferences
+      const essentialKeys = ['sb-eprk4ijhieql3asgbf5geh-auth-token']; // Example of keys to potentially keep if using Supabase/Auth
+      for (const key of Object.keys(localStorage)) {
+        if (!essentialKeys.includes(key)) {
+          localStorage.removeItem(key);
         }
+      }
+
+      // Restore each data key
+      for (const [key, value] of Object.entries(data)) {
+        await storage.set(key, value);
+      }
+
+      // Restore settings
+      if (settings['app-lang']) localStorage.setItem('app-lang', settings['app-lang']);
+      if (settings['app-theme']) localStorage.setItem('app-theme', settings['app-theme']);
+      if (settings['app-fontSize']) localStorage.setItem('app-fontSize', settings['app-fontSize']);
+      if (settings['gemini-api-key']) localStorage.setItem('gemini-api-key', settings['gemini-api-key']);
+
+      // Backward compatibility for v1 backups
+      if (data['gemini-api-key'] && typeof data['gemini-api-key'] === 'string') {
+        localStorage.setItem('gemini-api-key', data['gemini-api-key']);
       }
 
       toast.success(t('restoreSuccess'));
@@ -129,9 +153,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
       return;
     }
     
-    if (confirm(t('confirmRestore'))) {
-      await restoreData(last);
-    }
+    setConfirmRestore({ open: true, data: last });
   };
 
   const handleRestoreFromFile = () => {
@@ -146,9 +168,7 @@ export function BackupPage({ onBack }: BackupPageProps) {
       reader.onload = async (event) => {
         try {
           const json = JSON.parse(event.target?.result as string);
-          if (confirm(t('confirmRestore'))) {
-            await restoreData(json);
-          }
+          setConfirmRestore({ open: true, data: json });
         } catch (err) {
           toast.error(t('restoreError'));
         }
@@ -278,6 +298,29 @@ export function BackupPage({ onBack }: BackupPageProps) {
           <AlertDialogFooter className="flex-row gap-3">
             <AlertDialogCancel className="mt-0 flex-1 rounded-xl">{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleReset} className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl border-0">
+              {t('confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmRestore.open} onOpenChange={(open) => setConfirmRestore({ ...confirmRestore, open })}>
+        <AlertDialogContent className="w-[90vw] rounded-2xl max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('restoreFromFile')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('confirmRestore')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row gap-3">
+            <AlertDialogCancel className="mt-0 flex-1 rounded-xl">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (confirmRestore.data) {
+                  restoreData(confirmRestore.data);
+                }
+                setConfirmRestore({ open: false, data: null });
+              }} 
+              className="flex-1 gradient-primary text-primary-foreground rounded-xl border-0 shadow-lg"
+            >
               {t('confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
