@@ -661,12 +661,15 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
           <p className="text-2xl font-bold text-primary">{fc(currentMonthTotal)}</p>
         </div>
 
-        {/* Last 3 Months mini-summary */}
-        <div className="grid grid-cols-3 gap-2 px-1">
+        {/* Last 3 Months mini-summary - Stacked vertically */}
+        <div className="space-y-2">
           {lastThreeMonthsTotals.map((m) => (
-            <div key={m.key} className="bg-card rounded-lg border border-border/50 p-2 text-center">
-              <p className="text-[10px] font-medium text-muted-foreground uppercase">{m.label} {m.year}</p>
-              <p className="text-xs font-bold text-foreground truncate">{fc(m.total)}</p>
+            <div key={m.key} className="bg-card/50 rounded-xl border border-border/50 p-3 text-center">
+              <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider mb-0.5">{t('monthTotal')}</p>
+              <p className="text-[9px] text-muted-foreground mb-1 flex items-center justify-center gap-1 uppercase">
+                {m.label} {m.year}
+              </p>
+              <p className="text-lg font-bold text-foreground/80">{fc(m.total)}</p>
             </div>
           ))}
         </div>
