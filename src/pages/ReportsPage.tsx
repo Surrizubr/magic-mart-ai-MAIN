@@ -435,7 +435,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                 <Bus className="w-4 h-4 text-primary" />
                 <h3 className="text-sm font-bold text-foreground">{t('transportMonthly')}</h3>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-thin">
                 {data.length > 0 ? (
                   data.map((item, idx) => (
                     <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50/30 rounded-xl border border-emerald-100/50">
@@ -480,7 +480,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                 <Utensils className="w-4 h-4 text-primary" />
                 <h3 className="text-sm font-bold text-foreground">{t('restaurantsMonthly')}</h3>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-thin">
                 {data.length > 0 ? (
                   data.map((item, idx) => (
                     <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50/30 rounded-xl border border-emerald-100/50">
@@ -518,7 +518,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                 <Wrench className="w-4 h-4 text-primary" />
                 <h3 className="text-sm font-bold text-foreground">{t('maintenanceYearly')}</h3>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-thin">
                 {data.length > 0 ? (
                   data.map((item, idx) => (
                     <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50/30 rounded-xl border border-emerald-100/50">
