@@ -101,7 +101,33 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
   }, {});
   const topProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
 
-  // Unique visits (store + date) based on filtered history
+  // 3. Recent History for specifically requested cards (Last 3 Months)
+  const recentHistory = useMemo(() => {
+    const now = new Date();
+    const cutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const cutoffStr = cutoff.toISOString().slice(0, 7); 
+    return history.filter(h => h.purchase_date.startsWith(cutoffStr) || h.purchase_date > cutoffStr);
+  }, [history]);
+
+  const recentProductCounts = recentHistory.reduce<Record<string, number>>((acc, h) => {
+    acc[h.product_name] = (acc[h.product_name] || 0) + h.quantity;
+    return acc;
+  }, {});
+  const recentTopProducts = Object.entries(recentProductCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
+
+  const recentVisitKeys = Array.from(new Set(recentHistory.map(h => `${h.store_name}|${h.purchase_date}`)));
+  const recentStoreCounts = recentVisitKeys.reduce<Record<string, { count: number; lat?: number; lng?: number }>>((acc, key) => {
+    const [store_name] = key.split('|');
+    if (!acc[store_name]) {
+      const match = recentHistory.find(h => h.store_name === store_name);
+      acc[store_name] = { count: 0, lat: match?.store_lat, lng: match?.store_lng };
+    }
+    acc[store_name].count++;
+    return acc;
+  }, {});
+  const recentTopStores = Object.entries(recentStoreCounts).sort((a, b) => b[1].count - a[1].count);
+
+  // Unique visits (store + date) based on filtered history (for the Visits Dialog)
   const visitEntries = Array.from(new Set(filteredHistory.map(h => `${h.store_name}|${h.purchase_date}`)))
     .map(key => {
       const [store_name, purchase_date] = key.split('|');
@@ -320,14 +346,20 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         )}
 
         {/* Top Products */}
-        {topProducts.length > 0 ? (
-          <div className="bg-card rounded-xl border border-border p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Tag className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-bold text-foreground">{t('mostPurchased')}</h3>
+        {recentTopProducts.length > 0 ? (
+          <div className="bg-card rounded-xl border border-border p-4 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">{t('mostPurchased')}</h3>
+              </div>
+              <span className="text-[9px] font-bold text-primary bg-accent px-2 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
+                <Clock className="w-2.5 h-2.5" />
+                {t('lastThreeMonthsHistory')}
+              </span>
             </div>
             <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin">
-              {topProducts.map(([name, count], i) => (
+              {recentTopProducts.map(([name, count], i) => (
                 <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
@@ -345,14 +377,20 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         )}
 
         {/* Most Visited Stores */}
-        {topStores.length > 0 && (
-          <div className="bg-card rounded-xl border border-border p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Building2 className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-bold text-foreground">{t('mostVisitedStores')}</h3>
+        {recentTopStores.length > 0 && (
+          <div className="bg-card rounded-xl border border-border p-4 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">{t('mostVisitedStores')}</h3>
+              </div>
+              <span className="text-[9px] font-bold text-primary bg-accent px-2 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
+                <Clock className="w-2.5 h-2.5" />
+                {t('lastThreeMonthsHistory')}
+              </span>
             </div>
             <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin">
-              {topStores.map(([name, data], i) => (
+              {recentTopStores.map(([name, data], i) => (
                 <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
