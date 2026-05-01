@@ -38,7 +38,12 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
       .filter(s => s.status === 'critical')
   );
   const activeLists = listsState.filter(l => l.status === 'active' || l.status === 'shopping');
-  const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
+  const totalMonth = useMemo(() => {
+    const now = new Date().toISOString().slice(0, 7);
+    return history
+      .filter(h => h.purchase_date.startsWith(now))
+      .reduce((sum, h) => sum + h.total_price, 0);
+  }, [history]);
 
   const handleDeleteList = (id: string) => {
     setListsState(prev => {

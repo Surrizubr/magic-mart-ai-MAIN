@@ -31,25 +31,45 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
   // Group all history by month for the month picker and evolution chart
-  const monthsData = history.reduce<Record<string, { label: string, year: number, month: number, total: number }>>((acc, h) => {
-    const d = new Date(h.purchase_date);
-    const month = d.getMonth();
-    const year = d.getFullYear();
-    const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-    if (!acc[key]) {
-      acc[key] = {
-        label: d.toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'short', year: 'numeric' }).replace('.', ''),
-        year,
-        month,
+  const monthsData = useMemo(() => {
+    const acc = history.reduce<Record<string, { label: string, year: number, month: number, total: number }>>((acc, h) => {
+      const d = new Date(h.purchase_date + 'T12:00:00');
+      const month = d.getMonth();
+      const year = d.getFullYear();
+      const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+      if (!acc[key]) {
+        acc[key] = {
+          label: d.toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'short', year: 'numeric' }).replace('.', ''),
+          year,
+          month,
+          total: 0
+        };
+      }
+      acc[key].total += h.total_price;
+      return acc;
+    }, {});
+
+    // Ensure current month is always present
+    const now = new Date();
+    const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (!acc[currentKey]) {
+      acc[currentKey] = {
+        label: now.toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'short', year: 'numeric' }).replace('.', ''),
+        year: now.getFullYear(),
+        month: now.getMonth(),
         total: 0
       };
     }
-    acc[key].total += h.total_price;
     return acc;
-  }, {});
+  }, [history, lang]);
 
-  const sortedMonthKeys = Object.keys(monthsData).sort().reverse();
-  const [selectedMonth, setSelectedMonth] = useState<string>(sortedMonthKeys[0] || '');
+  const sortedMonthKeys = useMemo(() => Object.keys(monthsData).sort().reverse(), [monthsData]);
+  
+  // Default to current month instead of just the first one with history
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   // Filter history based on selected month
   const filteredHistory = selectedMonth 
@@ -174,6 +194,18 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
       />
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4 space-y-4">
+        {filteredHistory.length === 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center shadow-sm">
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Calendar className="w-6 h-6 text-amber-600" />
+            </div>
+            <h3 className="text-sm font-bold text-amber-900 mb-1">{t('noPurchasesThisMonthTitle') || 'Sem compras este mês'}</h3>
+            <p className="text-xs text-amber-800/70">
+              {t('noPurchasesThisMonthDesc') || 'Ainda não existem registros de compras para o período selecionado.'}
+            </p>
+          </div>
+        )}
+
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-card rounded-xl border border-border p-4">

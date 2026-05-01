@@ -642,6 +642,13 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
           <p className="text-2xl font-bold text-primary">{fc(currentMonthTotal)}</p>
         </div>
 
+        {currentMonthTotal === 0 && !searchQuery && !filterDate && !filterStore && (
+          <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-4 text-center">
+            <p className="text-sm font-bold text-amber-900 mb-1">{t('noPurchasesThisMonthTitle')}</p>
+            <p className="text-xs text-amber-800/70">{t('noPurchasesThisMonthDesc')}</p>
+          </div>
+        )}
+
         {/* Grouped by date + store */}
         {(() => {
           let lastMonth = '';
