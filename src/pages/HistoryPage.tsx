@@ -677,10 +677,15 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
         </div>
 
         {currentMonthTotal === 0 && !searchQuery && !filterDate && !filterStore && (
-          <div className="space-y-1.5">
-            <p className="text-[10px] text-muted-foreground uppercase px-1">
-              {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'long', year: 'numeric' })}
-            </p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-px bg-gradient-to-r from-emerald-500 to-transparent" />
+              <span className="text-[10px] uppercase tracking-[0.2em] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'long', year: 'numeric' })}
+              </span>
+              <div className="flex-1 h-px bg-gradient-to-l from-emerald-500 to-transparent" />
+            </div>
+            
             <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-4 text-center">
               <p className="text-sm font-bold text-amber-900 mb-1">{t('noPurchasesThisMonthTitle')}</p>
               <p className="text-xs text-amber-800/70">{t('noPurchasesThisMonthDesc')}</p>
