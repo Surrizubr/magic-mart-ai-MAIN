@@ -667,7 +667,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
             {t('lastThreeMonthsHistory')}
           </h3>
           {lastThreeMonthsTotals.map((m) => (
-            <div key={m.key} className="bg-card/40 rounded-xl border border-border/40 px-3 py-2 flex items-center justify-between">
+            <div key={m.key} className="bg-accent/50 rounded-xl border border-border px-3 py-2 flex items-center justify-between">
               <span className="text-[10px] font-bold text-muted-foreground uppercase">
                 {m.label} {m.year}
               </span>
@@ -677,9 +677,14 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
         </div>
 
         {currentMonthTotal === 0 && !searchQuery && !filterDate && !filterStore && (
-          <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-4 text-center">
-            <p className="text-sm font-bold text-amber-900 mb-1">{t('noPurchasesThisMonthTitle')}</p>
-            <p className="text-xs text-amber-800/70">{t('noPurchasesThisMonthDesc')}</p>
+          <div className="space-y-1.5">
+            <p className="text-[10px] text-muted-foreground uppercase px-1">
+              {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { month: 'long', year: 'numeric' })}
+            </p>
+            <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-4 text-center">
+              <p className="text-sm font-bold text-amber-900 mb-1">{t('noPurchasesThisMonthTitle')}</p>
+              <p className="text-xs text-amber-800/70">{t('noPurchasesThisMonthDesc')}</p>
+            </div>
           </div>
         )}
 
