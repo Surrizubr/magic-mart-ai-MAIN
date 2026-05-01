@@ -135,36 +135,61 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const executeGeoLocation = () => {
     setShowLocationGate(false);
     setGeoLoading(true);
+    
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      toast.error(t('locationError'));
+      setGeoLoading(false);
+      return;
+    }
+
+    const options = {
+      timeout: 10000,
+      enableHighAccuracy: false,
+      maximumAge: 60000
+    };
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
-            { headers: { 'Accept-Language': lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es-ES' : 'en-US' } }
+            { 
+              headers: { 
+                'Accept-Language': lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es-ES' : 'en-US',
+                'User-Agent': 'MagicmartAI/1.0'
+              } 
+            }
           );
+          if (!res.ok) throw new Error("OSM API error");
+          
           const data = await res.json();
           const addr = data.address || {};
           const road = addr.road || addr.pedestrian || addr.street || '';
           const number = addr.house_number || '';
-          const shop = addr.shop || addr.supermarket || addr.building || addr.commercial || '';
+          const shop = addr.shop || addr.supermarket || addr.building || addr.commercial || addr.mall || addr.marketplace || '';
+          
           let name = '';
-          if (shop) name = shop + ' - ';
-          name += road;
+          if (shop) name = shop;
+          if (road) name += (name ? ' - ' : '') + road;
           if (number) name += ', ' + number;
+          
           if (!name.trim()) name = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
           setStoreName(name.trim());
           toast.success(t('locationObtained'));
-        } catch {
+        } catch (err) {
+          console.error("Geocoding Error:", err);
           setStoreName(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
           toast.info(t('coordsSaved'));
+        } finally {
+          setGeoLoading(false);
         }
-        setGeoLoading(false);
       },
-      () => {
+      (err) => {
+        console.error("Geolocation Error:", err);
         setGeoLoading(false);
         toast.error(t('locationError'));
       },
-      { timeout: 10000 }
+      options
     );
   };
 
@@ -447,7 +472,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+              className="fixed inset-0 z-[150] bg-black/60 flex items-center justify-center p-4"
               onClick={() => setShowStoreDialog(false)}
             >
               <motion.div
@@ -469,7 +494,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                 <button
                   onClick={handleGeoLocation}
                   disabled={geoLoading}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium w-full justify-center"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium w-full justify-center disabled:opacity-50 cursor-pointer"
                 >
                   {geoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
                   {geoLoading ? t('gettingAddress') : t('useMyLocation')}
