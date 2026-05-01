@@ -348,15 +348,9 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         {/* Top Products */}
         {recentTopProducts.length > 0 ? (
           <div className="bg-card rounded-xl border border-border p-4 relative overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">{t('mostPurchased')}</h3>
-              </div>
-              <span className="text-[9px] font-bold text-primary bg-accent px-2 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
-                <Clock className="w-2.5 h-2.5" />
-                {t('lastThreeMonthsHistory')}
-              </span>
+            <div className="flex items-center gap-2 mb-3">
+              <Tag className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold text-foreground">{t('mostPurchased')}</h3>
             </div>
             <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin">
               {recentTopProducts.map(([name, count], i) => (
@@ -369,6 +363,10 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                 </div>
               ))}
             </div>
+            <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-border/50 text-[10px] text-muted-foreground">
+              <Clock className="w-3 h-3 text-primary/60" />
+              <span>{t('lastThreeMonthsHistory')}</span>
+            </div>
           </div>
         ) : (
           <div className="bg-card rounded-xl border border-border p-4 text-center">
@@ -379,15 +377,9 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         {/* Most Visited Stores */}
         {recentTopStores.length > 0 && (
           <div className="bg-card rounded-xl border border-border p-4 relative overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">{t('mostVisitedStores')}</h3>
-              </div>
-              <span className="text-[9px] font-bold text-primary bg-accent px-2 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
-                <Clock className="w-2.5 h-2.5" />
-                {t('lastThreeMonthsHistory')}
-              </span>
+            <div className="flex items-center gap-2 mb-3">
+              <Building2 className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold text-foreground">{t('mostVisitedStores')}</h3>
             </div>
             <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin">
               {recentTopStores.map(([name, data], i) => (
@@ -408,6 +400,10 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                   </button>
                 </div>
               ))}
+            </div>
+            <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-border/50 text-[10px] text-muted-foreground">
+              <Clock className="w-3 h-3 text-primary/60" />
+              <span>{t('lastThreeMonthsHistory')}</span>
             </div>
           </div>
         )}
